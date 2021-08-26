@@ -84,7 +84,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="install.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="usage.html"><strong aria-hidden="true">2.</strong> Usage</a></li><li class="chapter-item expanded "><a href="configuration.html" class="active"><strong aria-hidden="true">3.</strong> Configuration</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="keymap.html"><strong aria-hidden="true">3.1.</strong> Keymap</a></li><li class="chapter-item expanded "><a href="hooks.html"><strong aria-hidden="true">3.2.</strong> Hooks</a></li></ol></li></ol>            </div>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="install.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="usage.html"><strong aria-hidden="true">2.</strong> Usage</a></li><li class="chapter-item expanded "><a href="from-vim.html"><strong aria-hidden="true">3.</strong> Migrating from Vim</a></li><li class="chapter-item expanded "><a href="configuration.html" class="active"><strong aria-hidden="true">4.</strong> Configuration</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="themes.html"><strong aria-hidden="true">4.1.</strong> Themes</a></li><li class="chapter-item expanded "><a href="keymap.html"><strong aria-hidden="true">4.2.</strong> Keymap</a></li><li class="chapter-item expanded "><a href="remapping.html"><strong aria-hidden="true">4.3.</strong> Key Remapping</a></li><li class="chapter-item expanded "><a href="hooks.html"><strong aria-hidden="true">4.4.</strong> Hooks</a></li></ol></li></ol>            </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
@@ -146,84 +146,26 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="configuration"><a class="header" href="#configuration">Configuration</a></h1>
-<h2 id="theme"><a class="header" href="#theme">Theme</a></h2>
-<p>Use a custom theme by placing a theme.toml in your config directory (i.e ~/.config/helix/theme.toml). The default theme.toml can be found <a href="https://github.com/helix-editor/helix/blob/master/theme.toml">here</a>, and user submitted themes <a href="https://github.com/helix-editor/helix/blob/master/contrib/themes">here</a>.</p>
-<p>Styles in theme.toml are specified of in the form:</p>
-<pre><code class="language-toml">key = { fg = &quot;#ffffff&quot;, bg = &quot;#000000&quot;, modifiers = [&quot;bold&quot;, &quot;italic&quot;] }
+<p>To override global configuration parameters, create a <code>config.toml</code> file located in your config directory:</p>
+<ul>
+<li>Linux and Mac: <code>~/.config/helix/config.toml</code></li>
+<li>Windows: <code>%AppData%\helix\config.toml</code></li>
+</ul>
+<h2 id="lsp"><a class="header" href="#lsp">LSP</a></h2>
+<p>To display all language server messages in the status line add the following to your <code>config.toml</code>:</p>
+<pre><code class="language-toml">[lsp]
+display-messages = true
 </code></pre>
-<p>where <code>name</code> represents what you want to style, <code>fg</code> specifies the foreground color, <code>bg</code> the background color, and <code>modifiers</code> is a list of style modifiers. <code>bg</code> and <code>modifiers</code> can be omitted to defer to the defaults.</p>
-<p>To specify only the foreground color:</p>
-<pre><code class="language-toml">key = &quot;#ffffff&quot;
-</code></pre>
-<p>if the key contains a dot <code>'.'</code>, it must be quoted to prevent it being parsed as a <a href="https://toml.io/en/v1.0.0#keys">dotted key</a>.</p>
-<pre><code class="language-toml">&quot;key.key&quot; = &quot;#ffffff&quot;
-</code></pre>
-<p>Possible modifiers:</p>
-<table><thead><tr><th>modifier</th></tr></thead><tbody>
-<tr><td>bold</td></tr>
-<tr><td>dim</td></tr>
-<tr><td>italic</td></tr>
-<tr><td>underlined</td></tr>
-<tr><td>slow_blink</td></tr>
-<tr><td>rapid_blink</td></tr>
-<tr><td>reversed</td></tr>
-<tr><td>hidden</td></tr>
-<tr><td>crossed_out</td></tr>
-</tbody></table>
-<p>Possible keys:</p>
-<table><thead><tr><th>key</th><th>notes</th></tr></thead><tbody>
-<tr><td>attribute</td><td></td></tr>
-<tr><td>keyword</td><td></td></tr>
-<tr><td>keyword.directive</td><td>preprocessor directives (#if in C)</td></tr>
-<tr><td>namespace</td><td></td></tr>
-<tr><td>punctuation</td><td></td></tr>
-<tr><td>punctuation.delimiter</td><td></td></tr>
-<tr><td>operator</td><td></td></tr>
-<tr><td>special</td><td></td></tr>
-<tr><td>property</td><td></td></tr>
-<tr><td>variable</td><td></td></tr>
-<tr><td>variable.parameter</td><td></td></tr>
-<tr><td>type</td><td></td></tr>
-<tr><td>type.builtin</td><td></td></tr>
-<tr><td>constructor</td><td></td></tr>
-<tr><td>function</td><td></td></tr>
-<tr><td>function.macro</td><td></td></tr>
-<tr><td>function.builtin</td><td></td></tr>
-<tr><td>comment</td><td></td></tr>
-<tr><td>variable.builtin</td><td></td></tr>
-<tr><td>constant</td><td></td></tr>
-<tr><td>constant.builtin</td><td></td></tr>
-<tr><td>string</td><td></td></tr>
-<tr><td>number</td><td></td></tr>
-<tr><td>escape</td><td>escaped characters</td></tr>
-<tr><td>label</td><td>used for lifetimes</td></tr>
-<tr><td>module</td><td></td></tr>
-<tr><td>ui.background</td><td></td></tr>
-<tr><td>ui.linenr</td><td></td></tr>
-<tr><td>ui.statusline</td><td></td></tr>
-<tr><td>ui.popup</td><td></td></tr>
-<tr><td>ui.window</td><td></td></tr>
-<tr><td>ui.help</td><td></td></tr>
-<tr><td>ui.text</td><td></td></tr>
-<tr><td>ui.text.focus</td><td></td></tr>
-<tr><td>ui.menu.selected</td><td></td></tr>
-<tr><td>warning</td><td>LSP warning</td></tr>
-<tr><td>error</td><td>LSP error</td></tr>
-<tr><td>info</td><td>LSP info</td></tr>
-<tr><td>hint</td><td>LSP hint</td></tr>
-</tbody></table>
-<p>These keys match <a href="https://tree-sitter.github.io/tree-sitter/syntax-highlighting#theme">tree-sitter scopes</a>. We half-follow the common scopes from <a href="https://macromates.com/manual/en/language_grammars">macromates language grammars</a> with some differences.</p>
-<p>For a given highlight produced, styling will be determined based on the longest matching theme key. So it's enough to provide function to highlight <code>function.macro</code> and <code>function.builtin</code> as well, but you can use more specific scopes to highlight specific cases differently.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                                                    <a rel="prev" href="usage.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                                    <a rel="prev" href="from-vim.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
                         
-                                                    <a rel="next" href="keymap.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                                    <a rel="next" href="themes.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
                         
@@ -233,11 +175,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                                    <a rel="prev" href="usage.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                    <a rel="prev" href="from-vim.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
                 
-                                    <a rel="next" href="keymap.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                    <a rel="next" href="themes.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
                             </nav>
