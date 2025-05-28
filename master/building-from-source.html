@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Adding languages</title>
+        <title>Building from source</title>
 
 
         <!-- Custom HTML head -->
@@ -12,31 +12,31 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
 
-        <link rel="icon" href="../favicon.svg">
-        <link rel="shortcut icon" href="../favicon.png">
-        <link rel="stylesheet" href="../css/variables.css">
-        <link rel="stylesheet" href="../css/general.css">
-        <link rel="stylesheet" href="../css/chrome.css">
-        <link rel="stylesheet" href="../css/print.css" media="print">
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
-        <link rel="stylesheet" href="../fonts/fonts.css">
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" href="../highlight.css">
-        <link rel="stylesheet" href="../tomorrow-night.css">
-        <link rel="stylesheet" href="../ayu-highlight.css">
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
 
         <!-- Custom theme stylesheets -->
-        <link rel="stylesheet" href="../custom.css">
+        <link rel="stylesheet" href="custom.css">
 
     </head>
     <body class="sidebar-visible no-js">
     <div id="body-container">
         <!-- Provide site root to javascript -->
         <script>
-            var path_to_root = "../";
+            var path_to_root = "";
             var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "colibri" : "colibri";
         </script>
 
@@ -144,13 +144,13 @@
                     <h1 class="menu-title"></h1>
 
                     <div class="right-buttons">
-                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
                         </a>
                         <a href="https://github.com/helix-editor/helix" title="Git repository" aria-label="Git repository">
                             <i id="git-repository-button" class="fa fa-github"></i>
                         </a>
-                        <a href="https://github.com/helix-editor/helix/edit/master/book/src/guides/adding_languages.md" title="Suggest an edit" aria-label="Suggest an edit">
+                        <a href="https://github.com/helix-editor/helix/edit/master/book/src/building-from-source.md" title="Suggest an edit" aria-label="Suggest an edit">
                             <i id="git-edit-button" class="fa fa-edit"></i>
                         </a>
 
@@ -179,72 +179,151 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h2 id="adding-new-languages-to-helix"><a class="header" href="#adding-new-languages-to-helix">Adding new languages to Helix</a></h2>
-<p>In order to add a new language to Helix, you will need to follow the steps
-below.</p>
-<h2 id="language-configuration"><a class="header" href="#language-configuration">Language configuration</a></h2>
-<ol>
-<li>Add a new <code>[[language]]</code> entry in the <code>languages.toml</code> file and provide the
-necessary configuration for the new language. For more information on
-language configuration, refer to the
-<a href="../languages.html">language configuration section</a> of the documentation.
-A new language server can be added by extending the <code>[language-server]</code> table in the same file.</li>
-<li>If you are adding a new language or updating an existing language server
-configuration, run the command <code>cargo xtask docgen</code> to update the
-<a href="../lang-support.html">Language Support</a> documentation.</li>
-</ol>
-<blockquote>
-<p>💡 If you are adding a new Language Server configuration, make sure to update
-the
-<a href="https://github.com/helix-editor/helix/wiki/Language-Server-Configurations">Language Server Wiki</a>
-with the installation instructions.</p>
-</blockquote>
-<h2 id="grammar-configuration"><a class="header" href="#grammar-configuration">Grammar configuration</a></h2>
-<ol>
-<li>If a tree-sitter grammar is available for the new language, add a new
-<code>[[grammar]]</code> entry to the <code>languages.toml</code> file.</li>
-<li>If you are testing the grammar locally, you can use the <code>source.path</code> key
-with an absolute path to the grammar. However, before submitting a pull
-request, make sure to switch to using <code>source.git</code>.</li>
-</ol>
-<h2 id="queries"><a class="header" href="#queries">Queries</a></h2>
-<ol>
-<li>In order to provide syntax highlighting and indentation for the new language,
-you will need to add queries.</li>
-<li>Create a new directory for the language with the path
-<code>runtime/queries/&lt;name&gt;/</code>.</li>
-<li>Refer to the
-<a href="https://tree-sitter.github.io/tree-sitter/syntax-highlighting#queries">tree-sitter website</a>
-for more information on writing queries.</li>
-<li>A list of highlight captures can be found <a href="https://docs.helix-editor.com/themes.html#scopes">on the themes page</a>.</li>
-</ol>
-<blockquote>
-<p>💡 In Helix, the first matching query takes precedence when evaluating
-queries, which is different from other editors such as Neovim where the last
-matching query supersedes the ones before it. See
-<a href="https://github.com/helix-editor/helix/pull/1170#issuecomment-997294090">this issue</a>
-for an example.</p>
-</blockquote>
-<h2 id="common-issues"><a class="header" href="#common-issues">Common issues</a></h2>
+                        <h2 id="building-from-source"><a class="header" href="#building-from-source">Building from source</a></h2>
 <ul>
-<li>If you encounter errors when running Helix after switching branches, you may
-need to update the tree-sitter grammars. Run the command <code>hx --grammar fetch</code>
-to fetch the grammars and <code>hx --grammar build</code> to build any out-of-date
-grammars.</li>
-<li>If a parser is causing a segfault, or you want to remove it, make sure to
-remove the compiled parser located at <code>runtime/grammars/&lt;name&gt;.so</code>.</li>
-<li>If you are attempting to add queries and Helix is unable to locate them, ensure that the environment variable <code>HELIX_RUNTIME</code> is set to the location of the <code>runtime</code> folder you're developing in.</li>
+<li><a href="#configuring-helixs-runtime-files">Configuring Helix's runtime files</a>
+<ul>
+<li><a href="#linux-and-macos">Linux and macOS</a></li>
+<li><a href="#windows">Windows</a></li>
+<li><a href="#multiple-runtime-directories">Multiple runtime directories</a></li>
+<li><a href="#note-to-packagers">Note to packagers</a></li>
 </ul>
+</li>
+<li><a href="#validating-the-installation">Validating the installation</a></li>
+<li><a href="#configure-the-desktop-shortcut">Configure the desktop shortcut</a></li>
+</ul>
+<p>Requirements:</p>
+<p>Clone the Helix GitHub repository into a directory of your choice. The
+examples in this documentation assume installation into either <code>~/src/</code> on
+Linux and macOS, or <code>%userprofile%\src\</code> on Windows.</p>
+<ul>
+<li>The <a href="https://www.rust-lang.org/tools/install">Rust toolchain</a></li>
+<li>The <a href="https://git-scm.com/">Git version control system</a></li>
+<li>A C++14 compatible compiler to build the tree-sitter grammars, for example GCC or Clang</li>
+</ul>
+<p>If you are using the <code>musl-libc</code> standard library instead of <code>glibc</code> the following environment variable must be set during the build to ensure tree-sitter grammars can be loaded correctly:</p>
+<pre><code class="language-sh">RUSTFLAGS="-C target-feature=-crt-static"
+</code></pre>
+<ol>
+<li>
+<p>Clone the repository:</p>
+<pre><code class="language-sh">git clone https://github.com/helix-editor/helix
+cd helix
+</code></pre>
+</li>
+<li>
+<p>Compile from source:</p>
+<pre><code class="language-sh">cargo install --path helix-term --locked
+</code></pre>
+<p>This command will create the <code>hx</code> executable and construct the tree-sitter
+grammars in the local <code>runtime</code> folder.</p>
+</li>
+</ol>
+<blockquote>
+<p>💡 If you do not want to fetch or build grammars, set an environment variable <code>HELIX_DISABLE_AUTO_GRAMMAR_BUILD</code></p>
+</blockquote>
+<blockquote>
+<p>💡 Tree-sitter grammars can be fetched and compiled if not pre-packaged. Fetch
+grammars with <code>hx --grammar fetch</code> and compile them with
+<code>hx --grammar build</code>. This will install them in
+the <code>runtime</code> directory within the user's helix config directory (more
+<a href="#multiple-runtime-directories">details below</a>).</p>
+</blockquote>
+<h3 id="configuring-helixs-runtime-files"><a class="header" href="#configuring-helixs-runtime-files">Configuring Helix's runtime files</a></h3>
+<h4 id="linux-and-macos"><a class="header" href="#linux-and-macos">Linux and macOS</a></h4>
+<p>The <strong>runtime</strong> directory is one below the Helix source, so either export a
+<code>HELIX_RUNTIME</code> environment variable to point to that directory and add it to
+your <code>~/.bashrc</code> or equivalent:</p>
+<pre><code class="language-sh">export HELIX_RUNTIME=~/src/helix/runtime
+</code></pre>
+<p>Or, create a symbolic link:</p>
+<pre><code class="language-sh">ln -Ts $PWD/runtime ~/.config/helix/runtime
+</code></pre>
+<p>If the above command fails to create a symbolic link because the file exists either move <code>~/.config/helix/runtime</code> to a new location or delete it, then run the symlink command above again.</p>
+<h4 id="windows"><a class="header" href="#windows">Windows</a></h4>
+<p>Either set the <code>HELIX_RUNTIME</code> environment variable to point to the runtime files using the Windows setting (search for
+<code>Edit environment variables for your account</code>) or use the <code>setx</code> command in
+Cmd:</p>
+<pre><code class="language-sh">setx HELIX_RUNTIME "%userprofile%\source\repos\helix\runtime"
+</code></pre>
+<blockquote>
+<p>💡 <code>%userprofile%</code> resolves to your user directory like
+<code>C:\Users\Your-Name\</code> for example.</p>
+</blockquote>
+<p>Or, create a symlink in <code>%appdata%\helix\</code> that links to the source code directory:</p>
+<div class="table-wrapper"><table><thead><tr><th>Method</th><th>Command</th></tr></thead><tbody>
+<tr><td>PowerShell</td><td><code>New-Item -ItemType Junction -Target "runtime" -Path "$Env:AppData\helix\runtime"</code></td></tr>
+<tr><td>Cmd</td><td><code>cd %appdata%\helix</code> <br/> <code>mklink /D runtime "%userprofile%\src\helix\runtime"</code></td></tr>
+</tbody></table>
+</div>
+<blockquote>
+<p>💡 On Windows, creating a symbolic link may require running PowerShell or
+Cmd as an administrator.</p>
+</blockquote>
+<h4 id="multiple-runtime-directories"><a class="header" href="#multiple-runtime-directories">Multiple runtime directories</a></h4>
+<p>When Helix finds multiple runtime directories it will search through them for files in the
+following order:</p>
+<ol>
+<li><code>runtime/</code> sibling directory to <code>$CARGO_MANIFEST_DIR</code> directory (this is intended for
+developing and testing helix only).</li>
+<li><code>runtime/</code> subdirectory of OS-dependent helix user config directory.</li>
+<li><code>$HELIX_RUNTIME</code></li>
+<li>Distribution-specific fallback directory (set at compile time—not run time—
+with the <code>HELIX_DEFAULT_RUNTIME</code> environment variable)</li>
+<li><code>runtime/</code> subdirectory of path to Helix executable.</li>
+</ol>
+<p>This order also sets the priority for selecting which file will be used if multiple runtime
+directories have files with the same name.</p>
+<h4 id="note-to-packagers"><a class="header" href="#note-to-packagers">Note to packagers</a></h4>
+<p>If you are making a package of Helix for end users, to provide a good out of
+the box experience, you should set the <code>HELIX_DEFAULT_RUNTIME</code> environment
+variable at build time (before invoking <code>cargo build</code>) to a directory which
+will store the final runtime files after installation. For example, say you want
+to package the runtime into <code>/usr/lib/helix/runtime</code>. The rough steps a build
+script could follow are:</p>
+<ol>
+<li><code>export HELIX_DEFAULT_RUNTIME=/usr/lib/helix/runtime</code></li>
+<li><code>cargo build --profile opt --locked --path helix-term</code></li>
+<li><code>cp -r runtime $BUILD_DIR/usr/lib/helix/</code></li>
+<li><code>cp target/opt/hx $BUILD_DIR/usr/bin/hx</code></li>
+</ol>
+<p>This way the resulting <code>hx</code> binary will always look for its runtime directory in
+<code>/usr/lib/helix/runtime</code> if the user has no custom runtime in <code>~/.config/helix</code>
+or <code>HELIX_RUNTIME</code>.</p>
+<h3 id="validating-the-installation"><a class="header" href="#validating-the-installation">Validating the installation</a></h3>
+<p>To make sure everything is set up as expected you should run the Helix health
+check:</p>
+<pre><code class="language-sh">hx --health
+</code></pre>
+<p>For more information on the health check results refer to
+<a href="https://github.com/helix-editor/helix/wiki/Healthcheck">Health check</a>.</p>
+<h3 id="configure-the-desktop-shortcut"><a class="header" href="#configure-the-desktop-shortcut">Configure the desktop shortcut</a></h3>
+<p>If your desktop environment supports the
+<a href="https://specifications.freedesktop.org/menu-spec/menu-spec-latest.html">XDG desktop menu</a>
+you can configure Helix to show up in the application menu by copying the
+provided <code>.desktop</code> and icon files to their correct folders:</p>
+<pre><code class="language-sh">cp contrib/Helix.desktop ~/.local/share/applications
+cp contrib/helix.png ~/.icons # or ~/.local/share/icons
+</code></pre>
+<p>It is recommended to convert the links in the <code>.desktop</code> file to absolute paths to avoid potential problems:</p>
+<pre><code class="language-sh">sed -i -e "s|Exec=hx %F|Exec=$(readlink -f ~/.cargo/bin/hx) %F|g" \
+  -e "s|Icon=helix|Icon=$(readlink -f ~/.icons/helix.png)|g" ~/.local/share/applications/Helix.desktop
+</code></pre>
+<p>To use another terminal than the system default, you can modify the <code>.desktop</code>
+file. For example, to use <code>kitty</code>:</p>
+<pre><code class="language-sh">sed -i "s|Exec=hx %F|Exec=kitty hx %F|g" ~/.local/share/applications/Helix.desktop
+sed -i "s|Terminal=true|Terminal=false|g" ~/.local/share/applications/Helix.desktop
+</code></pre>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../guides/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="package-managers.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../guides/textobject.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="usage.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -254,11 +333,11 @@ remove the compiled parser located at <code>runtime/grammars/&lt;name&gt;.so</co
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../guides/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="package-managers.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../guides/textobject.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="usage.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
@@ -273,13 +352,13 @@ remove the compiled parser located at <code>runtime/grammars/&lt;name&gt;.so</co
         </script>
 
 
-        <script src="../elasticlunr.min.js"></script>
-        <script src="../mark.min.js"></script>
-        <script src="../searcher.js"></script>
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
 
-        <script src="../clipboard.min.js"></script>
-        <script src="../highlight.js"></script>
-        <script src="../book.js"></script>
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
 
         <!-- Custom JS scripts -->
 

@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Adding languages</title>
+        <title>Textobjects</title>
 
 
         <!-- Custom HTML head -->
@@ -12,31 +12,31 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
 
-        <link rel="icon" href="../favicon.svg">
-        <link rel="shortcut icon" href="../favicon.png">
-        <link rel="stylesheet" href="../css/variables.css">
-        <link rel="stylesheet" href="../css/general.css">
-        <link rel="stylesheet" href="../css/chrome.css">
-        <link rel="stylesheet" href="../css/print.css" media="print">
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
-        <link rel="stylesheet" href="../fonts/fonts.css">
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" href="../highlight.css">
-        <link rel="stylesheet" href="../tomorrow-night.css">
-        <link rel="stylesheet" href="../ayu-highlight.css">
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
 
         <!-- Custom theme stylesheets -->
-        <link rel="stylesheet" href="../custom.css">
+        <link rel="stylesheet" href="custom.css">
 
     </head>
     <body class="sidebar-visible no-js">
     <div id="body-container">
         <!-- Provide site root to javascript -->
         <script>
-            var path_to_root = "../";
+            var path_to_root = "";
             var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "colibri" : "colibri";
         </script>
 
@@ -144,13 +144,13 @@
                     <h1 class="menu-title"></h1>
 
                     <div class="right-buttons">
-                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
                         </a>
                         <a href="https://github.com/helix-editor/helix" title="Git repository" aria-label="Git repository">
                             <i id="git-repository-button" class="fa fa-github"></i>
                         </a>
-                        <a href="https://github.com/helix-editor/helix/edit/master/book/src/guides/adding_languages.md" title="Suggest an edit" aria-label="Suggest an edit">
+                        <a href="https://github.com/helix-editor/helix/edit/master/book/src/textobjects.md" title="Suggest an edit" aria-label="Suggest an edit">
                             <i id="git-edit-button" class="fa fa-edit"></i>
                         </a>
 
@@ -179,72 +179,59 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h2 id="adding-new-languages-to-helix"><a class="header" href="#adding-new-languages-to-helix">Adding new languages to Helix</a></h2>
-<p>In order to add a new language to Helix, you will need to follow the steps
-below.</p>
-<h2 id="language-configuration"><a class="header" href="#language-configuration">Language configuration</a></h2>
-<ol>
-<li>Add a new <code>[[language]]</code> entry in the <code>languages.toml</code> file and provide the
-necessary configuration for the new language. For more information on
-language configuration, refer to the
-<a href="../languages.html">language configuration section</a> of the documentation.
-A new language server can be added by extending the <code>[language-server]</code> table in the same file.</li>
-<li>If you are adding a new language or updating an existing language server
-configuration, run the command <code>cargo xtask docgen</code> to update the
-<a href="../lang-support.html">Language Support</a> documentation.</li>
-</ol>
-<blockquote>
-<p>💡 If you are adding a new Language Server configuration, make sure to update
-the
-<a href="https://github.com/helix-editor/helix/wiki/Language-Server-Configurations">Language Server Wiki</a>
-with the installation instructions.</p>
-</blockquote>
-<h2 id="grammar-configuration"><a class="header" href="#grammar-configuration">Grammar configuration</a></h2>
-<ol>
-<li>If a tree-sitter grammar is available for the new language, add a new
-<code>[[grammar]]</code> entry to the <code>languages.toml</code> file.</li>
-<li>If you are testing the grammar locally, you can use the <code>source.path</code> key
-with an absolute path to the grammar. However, before submitting a pull
-request, make sure to switch to using <code>source.git</code>.</li>
-</ol>
-<h2 id="queries"><a class="header" href="#queries">Queries</a></h2>
-<ol>
-<li>In order to provide syntax highlighting and indentation for the new language,
-you will need to add queries.</li>
-<li>Create a new directory for the language with the path
-<code>runtime/queries/&lt;name&gt;/</code>.</li>
-<li>Refer to the
-<a href="https://tree-sitter.github.io/tree-sitter/syntax-highlighting#queries">tree-sitter website</a>
-for more information on writing queries.</li>
-<li>A list of highlight captures can be found <a href="https://docs.helix-editor.com/themes.html#scopes">on the themes page</a>.</li>
-</ol>
-<blockquote>
-<p>💡 In Helix, the first matching query takes precedence when evaluating
-queries, which is different from other editors such as Neovim where the last
-matching query supersedes the ones before it. See
-<a href="https://github.com/helix-editor/helix/pull/1170#issuecomment-997294090">this issue</a>
-for an example.</p>
-</blockquote>
-<h2 id="common-issues"><a class="header" href="#common-issues">Common issues</a></h2>
+                        <h2 id="selecting-and-manipulating-text-with-textobjects"><a class="header" href="#selecting-and-manipulating-text-with-textobjects">Selecting and manipulating text with textobjects</a></h2>
+<p>In Helix, textobjects are a way to select, manipulate and operate on a piece of
+text in a structured way. They allow you to refer to blocks of text based on
+their structure or purpose, such as a word, sentence, paragraph, or even a
+function or block of code.</p>
+<p><img src="https://user-images.githubusercontent.com/23398472/124231131-81a4bb00-db2d-11eb-9d10-8e577ca7b177.gif" alt="Textobject demo" />
+<img src="https://user-images.githubusercontent.com/23398472/132537398-2a2e0a54-582b-44ab-a77f-eb818942203d.gif" alt="Textobject tree-sitter demo" /></p>
 <ul>
-<li>If you encounter errors when running Helix after switching branches, you may
-need to update the tree-sitter grammars. Run the command <code>hx --grammar fetch</code>
-to fetch the grammars and <code>hx --grammar build</code> to build any out-of-date
-grammars.</li>
-<li>If a parser is causing a segfault, or you want to remove it, make sure to
-remove the compiled parser located at <code>runtime/grammars/&lt;name&gt;.so</code>.</li>
-<li>If you are attempting to add queries and Helix is unable to locate them, ensure that the environment variable <code>HELIX_RUNTIME</code> is set to the location of the <code>runtime</code> folder you're developing in.</li>
+<li><code>ma</code> - Select around the object (<code>va</code> in Vim, <code>&lt;alt-a&gt;</code> in Kakoune)</li>
+<li><code>mi</code> - Select inside the object (<code>vi</code> in Vim, <code>&lt;alt-i&gt;</code> in Kakoune)</li>
 </ul>
+<div class="table-wrapper"><table><thead><tr><th>Key after <code>mi</code> or <code>ma</code></th><th>Textobject selected</th></tr></thead><tbody>
+<tr><td><code>w</code></td><td>Word</td></tr>
+<tr><td><code>W</code></td><td>WORD</td></tr>
+<tr><td><code>p</code></td><td>Paragraph</td></tr>
+<tr><td><code>(</code>, <code>[</code>, <code>'</code>, etc.</td><td>Specified surround pairs</td></tr>
+<tr><td><code>m</code></td><td>The closest surround pair</td></tr>
+<tr><td><code>f</code></td><td>Function</td></tr>
+<tr><td><code>t</code></td><td>Type (or Class)</td></tr>
+<tr><td><code>a</code></td><td>Argument/parameter</td></tr>
+<tr><td><code>c</code></td><td>Comment</td></tr>
+<tr><td><code>T</code></td><td>Test</td></tr>
+<tr><td><code>g</code></td><td>Change</td></tr>
+</tbody></table>
+</div>
+<blockquote>
+<p>💡 <code>f</code>, <code>t</code>, etc. need a tree-sitter grammar active for the current
+document and a special tree-sitter query file to work properly. <a href="./lang-support.html">Only
+some grammars</a> currently have the query file implemented.
+Contributions are welcome!</p>
+</blockquote>
+<h2 id="navigating-using-tree-sitter-textobjects"><a class="header" href="#navigating-using-tree-sitter-textobjects">Navigating using tree-sitter textobjects</a></h2>
+<p>Navigating between functions, classes, parameters, and other elements is
+possible using tree-sitter and textobject queries. For
+example to move to the next function use <code>]f</code>, to move to previous
+type use <code>[t</code>, and so on.</p>
+<p><img src="https://user-images.githubusercontent.com/23398472/152332550-7dfff043-36a2-4aec-b8f2-77c13eb56d6f.gif" alt="Tree-sitter-nav-demo" /></p>
+<p>For the full reference see the <a href="./keymap.html#unimpaired">unimpaired</a> section of the key bind
+documentation.</p>
+<blockquote>
+<p>💡 This feature relies on tree-sitter textobjects
+and requires the corresponding query file to work properly.</p>
+</blockquote>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../guides/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="surround.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="../guides/textobject.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="syntax-aware-motions.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -254,11 +241,11 @@ remove the compiled parser located at <code>runtime/grammars/&lt;name&gt;.so</co
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../guides/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="surround.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="../guides/textobject.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="syntax-aware-motions.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>
@@ -273,13 +260,13 @@ remove the compiled parser located at <code>runtime/grammars/&lt;name&gt;.so</co
         </script>
 
 
-        <script src="../elasticlunr.min.js"></script>
-        <script src="../mark.min.js"></script>
-        <script src="../searcher.js"></script>
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
 
-        <script src="../clipboard.min.js"></script>
-        <script src="../highlight.js"></script>
-        <script src="../book.js"></script>
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
 
         <!-- Custom JS scripts -->
 
