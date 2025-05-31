@@ -215,6 +215,13 @@ pub mod ropey1_shims {
         where
             R: RangeBounds<usize>;
 
+        fn get_byte_slice<R>(&self, byte_range: R) -> Option<RopeSlice<'_>>
+        where
+            R: RangeBounds<usize>;
+        fn get_char_slice<R>(&self, byte_range: R) -> Option<RopeSlice<'_>>
+        where
+            R: RangeBounds<usize>;
+
         fn chunk_at_byte(&self, byte_idx: usize) -> (&str, usize, usize, usize);
 
         fn chars_at_char(&self, char_idx: usize) -> Chars<'_>;
@@ -230,6 +237,12 @@ pub mod ropey1_shims {
         where
             R: RangeBounds<usize>;
         fn char_slice<R>(&self, byte_range: R) -> RopeSlice<'a>
+        where
+            R: RangeBounds<usize>;
+        fn get_byte_slice<R>(&self, byte_range: R) -> Option<RopeSlice<'a>>
+        where
+            R: RangeBounds<usize>;
+        fn get_char_slice<R>(&self, byte_range: R) -> Option<RopeSlice<'a>>
         where
             R: RangeBounds<usize>;
 
@@ -268,6 +281,47 @@ pub mod ropey1_shims {
             let end_byte = self.byte_to_char_idx(end_char);
 
             self.slice(start_byte..end_byte)
+        }
+        fn get_byte_slice<R>(&self, byte_range: R) -> Option<RopeSlice<'_>>
+        where
+            R: RangeBounds<usize>,
+        {
+            let end_byte = match byte_range.end_bound() {
+                Bound::Included(&i) => i - 1,
+                Bound::Excluded(&i) => i,
+                Bound::Unbounded => self.len_chars(),
+            };
+
+            if end_byte > self.len() {
+                return None;
+            }
+
+            // Slicing is already by bytes in Ropey 2.x.
+            Some(self.slice(byte_range))
+        }
+        fn get_char_slice<R>(&self, char_range: R) -> Option<RopeSlice<'_>>
+        where
+            R: RangeBounds<usize>,
+        {
+            let start_char = match char_range.start_bound() {
+                Bound::Included(&i) => i,
+                Bound::Excluded(&i) => i + 1,
+                Bound::Unbounded => 0,
+            };
+            let end_char = match char_range.end_bound() {
+                Bound::Included(&i) => i - 1,
+                Bound::Excluded(&i) => i,
+                Bound::Unbounded => self.len_chars(),
+            };
+
+            let start_byte = self.byte_to_char_idx(start_char);
+            let end_byte = self.byte_to_char_idx(end_char);
+
+            if end_byte > self.len() {
+                return None;
+            }
+
+            Some(self.slice(start_byte..end_byte))
         }
 
         fn chunk_at_byte(&self, byte_idx: usize) -> (&str, usize, usize, usize) {
@@ -330,6 +384,47 @@ pub mod ropey1_shims {
             let end_byte = self.byte_to_char_idx(end_char);
 
             self.slice(start_byte..end_byte)
+        }
+        fn get_byte_slice<R>(&self, byte_range: R) -> Option<RopeSlice<'a>>
+        where
+            R: RangeBounds<usize>,
+        {
+            let end_byte = match byte_range.end_bound() {
+                Bound::Included(&i) => i - 1,
+                Bound::Excluded(&i) => i,
+                Bound::Unbounded => self.len_chars(),
+            };
+
+            if end_byte > self.len() {
+                return None;
+            }
+
+            // Slicing is already by bytes in Ropey 2.x.
+            Some(self.slice(byte_range))
+        }
+        fn get_char_slice<R>(&self, char_range: R) -> Option<RopeSlice<'a>>
+        where
+            R: RangeBounds<usize>,
+        {
+            let start_char = match char_range.start_bound() {
+                Bound::Included(&i) => i,
+                Bound::Excluded(&i) => i + 1,
+                Bound::Unbounded => 0,
+            };
+            let end_char = match char_range.end_bound() {
+                Bound::Included(&i) => i - 1,
+                Bound::Excluded(&i) => i,
+                Bound::Unbounded => self.len_chars(),
+            };
+
+            let start_byte = self.byte_to_char_idx(start_char);
+            let end_byte = self.byte_to_char_idx(end_char);
+
+            if end_byte > self.len() {
+                return None;
+            }
+
+            Some(self.slice(start_byte..end_byte))
         }
 
         fn chunk_at_byte(&self, byte_idx: usize) -> (&'a str, usize, usize, usize) {
@@ -851,7 +946,7 @@ impl<'a> Iterator for RevRopeGraphemes<'a> {
 mod tests {
     use ropey::RopeSlice;
 
-    use crate::rope::RopeSliceExt;
+    use crate::rope::{ropey1_shims::*, RopeSliceExt};
 
     #[test]
     fn starts_with() {

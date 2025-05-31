@@ -3,7 +3,7 @@ use helix_core::{
     syntax::{config::Configuration, Loader},
     Syntax,
 };
-use helix_stdx::rope::RopeSliceExt;
+use helix_stdx::rope::{ropey1_shims::*, RopeSliceExt, LINE_TYPE};
 use ropey::Rope;
 use std::{ops::Range, path::PathBuf, process::Command};
 
@@ -202,8 +202,8 @@ fn test_treesitter_indent(
     let syntax = Syntax::new(text, language, &loader).unwrap();
     let indent_query = loader.indent_query(language).unwrap();
 
-    for i in 0..doc.len_lines() {
-        let line = text.line(i);
+    for i in 0..doc.len_lines(LINE_TYPE) {
+        let line = text.line(i, LINE_TYPE);
         if ignored_lines.iter().any(|range| range.contains(&(i + 1))) {
             continue;
         }
@@ -222,7 +222,7 @@ fn test_treesitter_indent(
             .unwrap()
             .to_string(&indent_style, tab_width);
             assert!(
-                line.get_slice(..pos).map_or(false, |s| s == suggested_indent),
+                line.get_char_slice(..pos).map_or(false, |s| s == suggested_indent),
                 "Wrong indentation for file {:?} on line {}:\n\"{}\" (original line)\n\"{}\" (suggested indentation)\n",
                 test_name,
                 i+1,
