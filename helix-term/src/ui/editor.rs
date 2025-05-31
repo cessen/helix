@@ -165,7 +165,7 @@ impl EditorView {
         let primary_cursor = doc
             .selection(view.id)
             .primary()
-            .cursor(doc.text().slice(..));
+            .cursor(doc.text().char_slice(..));
         if is_focused {
             decorations.add_decoration(text_decorations::Cursor {
                 cache: &editor.cursor_cache,
@@ -281,7 +281,7 @@ impl EditorView {
         loader: &'editor syntax::Loader,
     ) -> Option<syntax::Highlighter<'editor>> {
         let syntax = doc.syntax()?;
-        let text = doc.text().slice(..);
+        let text = doc.text().char_slice(..);
         let row = text.char_to_line(anchor.min(text.len_chars()));
         let range = Self::viewport_byte_range(text, row, height);
         let range = range.start as u32..range.end as u32;
@@ -296,7 +296,7 @@ impl EditorView {
         height: u16,
         text_annotations: &TextAnnotations,
     ) -> OverlayHighlights {
-        let text = doc.text().slice(..);
+        let text = doc.text().char_slice(..);
         let row = text.char_to_line(anchor.min(text.len_chars()));
 
         let mut range = Self::viewport_byte_range(text, row, height);
@@ -436,7 +436,7 @@ impl EditorView {
         cursor_shape_config: &CursorShapeConfig,
         is_terminal_focused: bool,
     ) -> OverlayHighlights {
-        let text = doc.text().slice(..);
+        let text = doc.text().char_slice(..);
         let selection = doc.selection(view.id);
         let primary_idx = selection.primary_index();
 
@@ -543,7 +543,7 @@ impl EditorView {
         // Highlight matching braces
         let syntax = doc.syntax()?;
         let highlight = theme.find_highlight_exact("ui.cursor.match")?;
-        let text = doc.text().slice(..);
+        let text = doc.text().char_slice(..);
         let pos = doc.selection(view.id).primary().cursor(text);
         let pos = helix_core::match_brackets::find_matching_bracket(syntax, text, pos)?;
         Some(OverlayHighlights::single(highlight, pos..pos + 1))
@@ -621,7 +621,7 @@ impl EditorView {
         is_focused: bool,
         decoration_manager: &mut DecorationManager<'d>,
     ) {
-        let text = doc.text().slice(..);
+        let text = doc.text().char_slice(..);
         let cursors: Rc<[_]> = doc
             .selection(view.id)
             .iter()
@@ -694,7 +694,7 @@ impl EditorView {
         let cursor = doc
             .selection(view.id)
             .primary()
-            .cursor(doc.text().slice(..));
+            .cursor(doc.text().char_slice(..));
 
         let diagnostics = doc.diagnostics().iter().filter(|diagnostic| {
             diagnostic.range.start <= cursor && diagnostic.range.end >= cursor
@@ -742,7 +742,7 @@ impl EditorView {
 
     /// Apply the highlighting on the lines where a cursor is active
     pub fn cursorline(doc: &Document, view: &View, theme: &Theme) -> impl Decoration {
-        let text = doc.text().slice(..);
+        let text = doc.text().char_slice(..);
         // TODO only highlight the visual line that contains the cursor instead of the full visual line
         let primary_line = doc.selection(view.id).primary().cursor_line(text);
 
@@ -781,7 +781,7 @@ impl EditorView {
         viewport: Rect,
         text_annotations: &TextAnnotations,
     ) {
-        let text = doc.text().slice(..);
+        let text = doc.text().char_slice(..);
 
         // Manual fallback behaviour:
         // ui.cursorcolumn.{p/s} -> ui.cursorcolumn -> ui.cursorline.{p/s}
@@ -947,7 +947,7 @@ impl EditorView {
                                     doc.restore(view, last_savepoint, true);
                                 }
 
-                                let text = doc.text().slice(..);
+                                let text = doc.text().char_slice(..);
                                 let cursor = doc.selection(view.id).primary().cursor(text);
 
                                 let shift_position = |pos: usize| -> usize {
@@ -1136,7 +1136,7 @@ impl EditorView {
                     } else if editor.mode == Mode::Select {
                         // Discards non-primary selections for consistent UX with normal mode
                         let primary = doc.selection(view_id).primary().put_cursor(
-                            doc.text().slice(..),
+                            doc.text().char_slice(..),
                             pos,
                             true,
                         );
@@ -1188,7 +1188,7 @@ impl EditorView {
 
                 let mut selection = doc.selection(view.id).clone();
                 let primary = selection.primary_mut();
-                *primary = primary.put_cursor(doc.text().slice(..), pos, true);
+                *primary = primary.put_cursor(doc.text().char_slice(..), pos, true);
                 doc.set_selection(view.id, selection);
                 let view_id = view.id;
                 cxt.editor.ensure_cursor_in_view(view_id);
@@ -1232,7 +1232,7 @@ impl EditorView {
                         // behavior of yanking on non-single-char selections.
                         doc.selection(view.id)
                             .primary()
-                            .slice(doc.text().slice(..))
+                            .char_slice(doc.text().char_slice(..))
                             .len_chars()
                             > 1
                     }

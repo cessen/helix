@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
 use helix_core::command_line::{ExpansionKind, Token, TokenKind, Tokenizer};
+use helix_stdx::rope::ropey1_shims::*;
 
 use anyhow::{anyhow, bail, Result};
 
@@ -203,7 +204,7 @@ fn expand_inner<'a>(editor: &Editor, content: Cow<'a, str>) -> Result<Cow<'a, st
 // returns a `Cow<'static, str>` instead.
 fn expand_variable(editor: &Editor, variable: Variable) -> Result<Cow<'static, str>> {
     let (view, doc) = current_ref!(editor);
-    let text = doc.text().slice(..);
+    let text = doc.text().char_slice(..);
 
     match variable {
         Variable::CursorLine => {

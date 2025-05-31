@@ -333,7 +333,7 @@ mod test {
             );
 
         assert_eq!(
-            get_surround_pos(None, doc.slice(..), &selection, Some('('), 1).unwrap(),
+            get_surround_pos(None, doc.char_slice(..), &selection, Some('('), 1).unwrap(),
             expectations
         );
     }
@@ -348,7 +348,7 @@ mod test {
             );
 
         assert_eq!(
-            get_surround_pos(None, doc.slice(..), &selection, Some('('), 1),
+            get_surround_pos(None, doc.char_slice(..), &selection, Some('('), 1),
             Err(Error::PairNotFound)
         );
     }
@@ -363,7 +363,7 @@ mod test {
             );
 
         assert_eq!(
-            get_surround_pos(None, doc.slice(..), &selection, Some('('), 1),
+            get_surround_pos(None, doc.char_slice(..), &selection, Some('('), 1),
             Err(Error::PairNotFound) // overlapping surround chars
         );
     }
@@ -378,7 +378,7 @@ mod test {
             );
 
         assert_eq!(
-            get_surround_pos(None, doc.slice(..), &selection, Some('['), 1),
+            get_surround_pos(None, doc.char_slice(..), &selection, Some('['), 1),
             Err(Error::CursorOverlap)
         );
     }
@@ -394,7 +394,7 @@ mod test {
 
         assert_eq!(2, expectations.len());
         assert_eq!(
-            find_nth_pairs_pos(doc.slice(..), '\'', selection.primary(), 1)
+            find_nth_pairs_pos(doc.char_slice(..), '\'', selection.primary(), 1)
                 .expect("find should succeed"),
             (expectations[0], expectations[1])
         )
@@ -411,7 +411,7 @@ mod test {
 
         assert_eq!(2, expectations.len());
         assert_eq!(
-            find_nth_pairs_pos(doc.slice(..), '\'', selection.primary(), 2)
+            find_nth_pairs_pos(doc.char_slice(..), '\'', selection.primary(), 2)
                 .expect("find should succeed"),
             (expectations[0], expectations[1])
         )
@@ -427,7 +427,7 @@ mod test {
             );
 
         assert_eq!(
-            find_nth_pairs_pos(doc.slice(..), '\'', selection.primary(), 1),
+            find_nth_pairs_pos(doc.char_slice(..), '\'', selection.primary(), 1),
             Err(Error::CursorOnAmbiguousPair)
         )
     }
@@ -442,7 +442,7 @@ mod test {
             );
 
         assert_eq!(
-            find_nth_closest_pairs_pos(None, doc.slice(..), selection.primary(), 1),
+            find_nth_closest_pairs_pos(None, doc.char_slice(..), selection.primary(), 1),
             Err(Error::PairNotFound)
         )
     }

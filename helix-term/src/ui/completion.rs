@@ -9,6 +9,7 @@ use crate::{
 use helix_core::snippets::{ActiveSnippet, RenderedSnippet, Snippet};
 use helix_core::{self as core, chars, fuzzy::MATCHER, Change, Transaction};
 use helix_lsp::{lsp, util, OffsetEncoding};
+use helix_stdx::rope::ropey1_shims::*;
 use helix_view::{
     editor::CompleteAction,
     handlers::lsp::SignatureHelpInvoked,
@@ -295,7 +296,7 @@ impl Completion {
             .ignore_escape_key(true);
 
         let (view, doc) = current_ref!(editor);
-        let text = doc.text().slice(..);
+        let text = doc.text().char_slice(..);
         let cursor = doc.selection(view.id).primary().cursor(text);
         let offset = text
             .chars_at(cursor)
@@ -304,7 +305,7 @@ impl Completion {
             .count();
         let start_offset = cursor.saturating_sub(offset);
 
-        let fragment = doc.text().slice(start_offset..cursor);
+        let fragment = doc.text().char_slice(start_offset..cursor);
         let mut completion = Self {
             popup,
             trigger_offset,
@@ -588,7 +589,7 @@ fn lsp_item_to_transaction(
     replace_mode: bool,
 ) -> (Transaction, Option<RenderedSnippet>) {
     let selection = doc.selection(view_id);
-    let text = doc.text().slice(..);
+    let text = doc.text().char_slice(..);
     let primary_cursor = selection.primary().cursor(text);
 
     let (edit_offset, new_text) = if let Some(edit) = &item.text_edit {

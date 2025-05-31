@@ -1058,7 +1058,7 @@ pub fn indent_for_newline(
                             text.line_to_char(line_idx) + first_non_whitespace_char,
                             false,
                         )?;
-                        let leading_whitespace = line.slice(0..first_non_whitespace_char);
+                        let leading_whitespace = line.char_slice(0..first_non_whitespace_char);
                         indent.relative_indent(
                             &computed_indent,
                             leading_whitespace,
@@ -1119,18 +1119,18 @@ mod test {
         let indent_width = 4;
         let line = Rope::from("        fn new"); // 8 spaces
         assert_eq!(
-            indent_level_for_line(line.slice(..), tab_width, indent_width),
+            indent_level_for_line(line.char_slice(..), tab_width, indent_width),
             2
         );
         let line = Rope::from("\t\t\tfn new"); // 3 tabs
         assert_eq!(
-            indent_level_for_line(line.slice(..), tab_width, indent_width),
+            indent_level_for_line(line.char_slice(..), tab_width, indent_width),
             3
         );
         // mixed indentation
         let line = Rope::from("\t    \tfn new"); // 1 tab, 4 spaces, tab
         assert_eq!(
-            indent_level_for_line(line.slice(..), tab_width, indent_width),
+            indent_level_for_line(line.char_slice(..), tab_width, indent_width),
             3
         );
     }
@@ -1141,12 +1141,12 @@ mod test {
         let indent_width = 16;
         let line = Rope::from("                fn new"); // 16 spaces
         assert_eq!(
-            indent_level_for_line(line.slice(..), tab_width, indent_width),
+            indent_level_for_line(line.char_slice(..), tab_width, indent_width),
             1
         );
         let line = Rope::from("                                fn new"); // 32 spaces
         assert_eq!(
-            indent_level_for_line(line.slice(..), tab_width, indent_width),
+            indent_level_for_line(line.char_slice(..), tab_width, indent_width),
             2
         );
     }

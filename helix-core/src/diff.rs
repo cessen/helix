@@ -82,15 +82,15 @@ impl imara_diff::Sink for LineChangeSetBuilder<'_> {
                         fragment = self.after.to_string().into();
                     } else {
                         let start = self.after.line_to_char(after.start as usize);
-                        fragment = self.after.slice(start..).to_string().into();
+                        fragment = self.after.char_slice(start..).to_string().into();
                     }
                 } else if after.start == 0 {
                     let end = self.after.line_to_char(after.end as usize);
-                    fragment = self.after.slice(..end).to_string().into();
+                    fragment = self.after.char_slice(..end).to_string().into();
                 } else {
                     let start = self.after.line_to_char(after.start as usize);
                     let end = self.after.line_to_char(after.end as usize);
-                    fragment = self.after.slice(start..end).to_string().into();
+                    fragment = self.after.char_slice(start..end).to_string().into();
                 }
             } else {
                 for &line in &self.file.after[after.start as usize..after.end as usize] {
@@ -161,8 +161,8 @@ impl<'a> imara_diff::intern::TokenSource for RopeLines<'a> {
 pub fn compare_ropes(before: &Rope, after: &Rope) -> Transaction {
     let start = Instant::now();
     let res = ChangeSet::with_capacity(32);
-    let after = after.slice(..);
-    let file = InternedInput::new(RopeLines(before.slice(..)), RopeLines(after));
+    let after = after.char_slice(..);
+    let file = InternedInput::new(RopeLines(before.char_slice(..)), RopeLines(after));
     let builder = LineChangeSetBuilder {
         res,
         file: &file,

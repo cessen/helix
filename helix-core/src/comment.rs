@@ -24,7 +24,7 @@ pub fn get_comment_token<'a, S: AsRef<str>>(
     tokens
         .iter()
         .map(AsRef::as_ref)
-        .filter(|token| line.slice(start..).starts_with(token))
+        .filter(|token| line.char_slice(start..).starts_with(token))
         .max_by_key(|token| token.len())
 }
 
@@ -56,7 +56,8 @@ fn find_line_comment(
             min = std::cmp::min(min, pos);
 
             // line can be shorter than pos + token len
-            let fragment = Cow::from(line_slice.slice(pos..std::cmp::min(pos + token.len(), len)));
+            let fragment =
+                Cow::from(line_slice.char_slice(pos..std::cmp::min(pos + token.len(), len)));
 
             // as soon as one of the non-blank lines doesn't have a comment, the whole block is
             // considered uncommented.
@@ -80,7 +81,7 @@ fn find_line_comment(
 
 #[must_use]
 pub fn toggle_line_comments(doc: &Rope, selection: &Selection, token: Option<&str>) -> Transaction {
-    let text = doc.slice(..);
+    let text = doc.char_slice(..);
 
     let token = token.unwrap_or(DEFAULT_COMMENT_TOKEN);
     let comment = Tendril::from(format!("{} ", token));
@@ -161,7 +162,7 @@ pub fn find_block_comments(
         }
     });
     for range in selection {
-        let selection_slice = range.slice(text);
+        let selection_slice = range.char_slice(text);
         if let (Some(start_pos), Some(end_pos)) = (
             selection_slice.first_non_whitespace_char(),
             selection_slice.last_non_whitespace_char(),
@@ -178,8 +179,8 @@ pub fn find_block_comments(
                 before_end = end_pos.saturating_sub(end_len);
 
                 if len >= start_len + end_len {
-                    let start_fragment = selection_slice.slice(start_pos..after_start);
-                    let end_fragment = selection_slice.slice(before_end + 1..end_pos + 1);
+                    let start_fragment = selection_slice.char_slice(start_pos..after_start);
+                    let end_fragment = selection_slice.char_slice(before_end + 1..end_pos + 1);
 
                     // block commented with these tokens
                     if start_fragment == start.as_str() && end_fragment == end.as_str() {
@@ -301,7 +302,7 @@ pub fn toggle_block_comments(
     selection: &Selection,
     tokens: &[BlockCommentToken],
 ) -> Transaction {
-    let text = doc.slice(..);
+    let text = doc.char_slice(..);
     let (commented, comment_changes) = find_block_comments(tokens, text, selection);
     let (mut transaction, ranges) =
         create_block_comment_transaction(doc, selection, commented, comment_changes);
@@ -314,10 +315,10 @@ pub fn toggle_block_comments(
 pub fn split_lines_of_selection(text: RopeSlice, selection: &Selection) -> Selection {
     let mut ranges = SmallVec::new();
     for range in selection.ranges() {
-        let (line_start, line_end) = range.line_range(text.slice(..));
+        let (line_start, line_end) = range.line_range(text.char_slice(..));
         let mut pos = text.line_to_char(line_start);
         for line in text
-            .slice(pos..text.line_to_char(line_end + 1))
+            .char_slice(pos..text.line_to_char(line_end + 1))
             .lines(LINE_TYPE)
         {
             let start = pos;
@@ -340,7 +341,7 @@ mod test {
             // four lines, two space indented, except for line 1 which is blank.
             let doc = Rope::from("  1\n\n  2\n  3");
 
-            let text = doc.slice(..);
+            let text = doc.char_slice(..);
 
             let res = find_line_comment("//", text, 0..3);
             // (commented = false, to_change = [line 0, line 2], min = col 2, margin = 0)
@@ -352,7 +353,7 @@ mod test {
             // three lines where the second line is empty.
             let doc = Rope::from("// hello\n\n// there");
 
-            let res = find_line_comment("//", doc.slice(..), 0..3);
+            let res = find_line_comment("//", doc.char_slice(..), 0..3);
 
             // (commented = true, to_change = [line 0, line 2], min = col 0, margin = 1)
             assert_eq!(res, (true, vec![0, 2], 0, 1));
@@ -422,7 +423,7 @@ mod test {
         // select whole document
         let selection = Selection::single(0, doc.len_chars());
 
-        let text = doc.slice(..);
+        let text = doc.char_slice(..);
 
         let res = find_block_comments(&[BlockCommentToken::default()], text, &selection);
 
@@ -468,7 +469,7 @@ mod test {
         let tokens = ["//", "///"];
 
         assert_eq!(
-            super::get_comment_token(rope.slice(..), tokens.as_slice(), 0),
+            super::get_comment_token(rope.char_slice(..), tokens.as_slice(), 0),
             None
         );
     }
@@ -483,7 +484,7 @@ mod test {
         let tokens = ["///", "//"];
 
         assert_eq!(
-            super::get_comment_token(text.slice(..), tokens.as_slice(), 0),
+            super::get_comment_token(text.char_slice(..), tokens.as_slice(), 0),
             Some("///")
         );
     }

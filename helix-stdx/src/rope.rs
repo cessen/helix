@@ -868,14 +868,14 @@ impl<'a> Iterator for RopeGraphemes<'a> {
             }
         }
 
-        // if a < self.cur_chunk_start {
-        Some(self.text.slice(a..b))
-        // } else {
-        //     // TODO: get slice directly from chunk. Probably should add a method on ChunkCursor in Ropey2 for this.
-        //     let a2 = a - self.cur_chunk_start;
-        //     let b2 = b - self.cur_chunk_start;
-        //     Some((&self.cur_chunk[a2..b2]).into())
-        // }
+        if a < self.cur_chunk_start {
+            use ropey1_shims::*;
+            Some(self.text.byte_slice(a..b))
+        } else {
+            let a2 = a - self.cur_chunk_start;
+            let b2 = b - self.cur_chunk_start;
+            Some((&self.cur_chunk[a2..b2]).into())
+        }
     }
 }
 
@@ -931,14 +931,14 @@ impl<'a> Iterator for RevRopeGraphemes<'a> {
             }
         }
 
-        // if a >= self.cur_chunk_start + self.cur_chunk.len() {
-        Some(self.text.slice(b..a))
-        // } else {
-        //     // TODO: get slice directly from chunk. Probably should add a method on ChunkCursor in Ropey2 for this.
-        //     let a2 = a - self.cur_chunk_start;
-        //     let b2 = b - self.cur_chunk_start;
-        //     Some((&self.cur_chunk[b2..a2]).into())
-        // }
+        if a >= self.cur_chunk_start + self.cur_chunk.len() {
+            use ropey1_shims::*;
+            Some(self.text.byte_slice(b..a))
+        } else {
+            let a2 = a - self.cur_chunk_start;
+            let b2 = b - self.cur_chunk_start;
+            Some((&self.cur_chunk[b2..a2]).into())
+        }
     }
 }
 

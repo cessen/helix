@@ -48,13 +48,13 @@ impl Pair {
     }
 
     pub fn next_is_not_alpha(doc: &Rope, range: &Range) -> bool {
-        let cursor = range.cursor(doc.slice(..));
+        let cursor = range.cursor(doc.char_slice(..));
         let next_char = doc.get_char(cursor);
         next_char.map(|c| !c.is_alphanumeric()).unwrap_or(true)
     }
 
     pub fn prev_is_not_alpha(doc: &Rope, range: &Range) -> bool {
-        let cursor = range.cursor(doc.slice(..));
+        let cursor = range.cursor(doc.char_slice(..));
         let prev_char = prev_char(doc, cursor);
         prev_char.map(|c| !c.is_alphanumeric()).unwrap_or(true)
     }
@@ -173,7 +173,7 @@ fn get_next_range(doc: &Rope, start_range: &Range, offset: usize, len_inserted: 
         );
     }
 
-    let doc_slice = doc.slice(..);
+    let doc_slice = doc.char_slice(..);
     let single_grapheme = start_range.is_single_grapheme(doc_slice);
 
     // just skip over graphemes
@@ -236,7 +236,7 @@ fn get_next_range(doc: &Rope, start_range: &Range, offset: usize, len_inserted: 
 
         (_, Direction::Forward) => {
             if single_grapheme {
-                graphemes::prev_grapheme_boundary(doc.slice(..), start_range.head) + 1
+                graphemes::prev_grapheme_boundary(doc.char_slice(..), start_range.head) + 1
 
             // if we are appending, the anchor stays where it is; only offset
             // for multiple range insertions
@@ -250,7 +250,7 @@ fn get_next_range(doc: &Rope, start_range: &Range, offset: usize, len_inserted: 
                 // if we're backward, then the head is at the first char
                 // of the typed char, so we need to add the length of
                 // the closing char
-                graphemes::prev_grapheme_boundary(doc.slice(..), start_range.anchor)
+                graphemes::prev_grapheme_boundary(doc.char_slice(..), start_range.anchor)
                     + len_inserted
                     + offset
             } else {
@@ -269,7 +269,7 @@ fn handle_open(doc: &Rope, selection: &Selection, pair: &Pair) -> Transaction {
     let mut offs = 0;
 
     let transaction = Transaction::change_by_selection(doc, selection, |start_range| {
-        let cursor = start_range.cursor(doc.slice(..));
+        let cursor = start_range.cursor(doc.char_slice(..));
         let next_char = doc.get_char(cursor);
         let len_inserted;
 
@@ -308,7 +308,7 @@ fn handle_close(doc: &Rope, selection: &Selection, pair: &Pair) -> Transaction {
     let mut offs = 0;
 
     let transaction = Transaction::change_by_selection(doc, selection, |start_range| {
-        let cursor = start_range.cursor(doc.slice(..));
+        let cursor = start_range.cursor(doc.char_slice(..));
         let next_char = doc.get_char(cursor);
         let mut len_inserted = 0;
 
@@ -341,7 +341,7 @@ fn handle_same(doc: &Rope, selection: &Selection, pair: &Pair) -> Transaction {
     let mut offs = 0;
 
     let transaction = Transaction::change_by_selection(doc, selection, |start_range| {
-        let cursor = start_range.cursor(doc.slice(..));
+        let cursor = start_range.cursor(doc.char_slice(..));
         let mut len_inserted = 0;
         let next_char = doc.get_char(cursor);
 

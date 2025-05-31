@@ -170,7 +170,7 @@ pub mod util {
         let line = match offset_encoding {
             OffsetEncoding::Utf8 => {
                 let line_start = doc.line_to_byte(pos_line);
-                let line_end = line_end_byte_index(&doc.slice(..), pos_line);
+                let line_end = line_end_byte_index(&doc.char_slice(..), pos_line);
                 line_start..line_end
             }
             OffsetEncoding::Utf16 => {
@@ -179,12 +179,12 @@ pub mod util {
                 // but the functions are just missing.
                 // Translate to char first and then utf-16 as a workaround
                 let line_start = doc.line_to_char(pos_line);
-                let line_end = line_end_char_index(&doc.slice(..), pos_line);
+                let line_end = line_end_char_index(&doc.char_slice(..), pos_line);
                 doc.char_to_utf16_cu(line_start)..doc.char_to_utf16_cu(line_end)
             }
             OffsetEncoding::Utf32 => {
                 let line_start = doc.line_to_char(pos_line);
-                let line_end = line_end_char_index(&doc.slice(..), pos_line);
+                let line_end = line_end_char_index(&doc.char_slice(..), pos_line);
                 line_start..line_end
             }
         };
@@ -327,7 +327,7 @@ pub mod util {
             Some(new_text.into())
         };
 
-        let text = doc.slice(..);
+        let text = doc.char_slice(..);
         let (removed_start, removed_end) = completion_range(
             text,
             edit_offset,
@@ -335,7 +335,7 @@ pub mod util {
             selection.primary().cursor(text),
         )
         .expect("transaction must be valid for primary selection");
-        let removed_text = text.slice(removed_start..removed_end);
+        let removed_text = text.char_slice(removed_start..removed_end);
 
         let (transaction, mut selection) = Transaction::change_by_selection_ignore_overlapping(
             doc,
@@ -343,7 +343,7 @@ pub mod util {
             |range| {
                 let cursor = range.cursor(text);
                 completion_range(text, edit_offset, replace_mode, cursor)
-                    .filter(|(start, end)| text.slice(start..end) == removed_text)
+                    .filter(|(start, end)| text.char_slice(start..end) == removed_text)
                     .unwrap_or_else(|| find_completion_range(text, replace_mode, cursor))
             },
             |_, _| replacement.clone(),
@@ -365,7 +365,7 @@ pub mod util {
         snippet: Snippet,
         cx: &mut SnippetRenderCtx,
     ) -> (Transaction, RenderedSnippet) {
-        let text = doc.slice(..);
+        let text = doc.char_slice(..);
         let (removed_start, removed_end) = completion_range(
             text,
             edit_offset,
@@ -373,14 +373,14 @@ pub mod util {
             selection.primary().cursor(text),
         )
         .expect("transaction must be valid for primary selection");
-        let removed_text = text.slice(removed_start..removed_end);
+        let removed_text = text.char_slice(removed_start..removed_end);
         let (transaction, mapped_selection, snippet) = snippet.render(
             doc,
             selection,
             |range| {
                 let cursor = range.cursor(text);
                 completion_range(text, edit_offset, replace_mode, cursor)
-                    .filter(|(start, end)| text.slice(start..end) == removed_text)
+                    .filter(|(start, end)| text.char_slice(start..end) == removed_text)
                     .unwrap_or_else(|| find_completion_range(text, replace_mode, cursor))
             },
             cx,

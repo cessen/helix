@@ -119,9 +119,9 @@ pub fn trigger_auto_completion(editor: &Editor, trigger_char_only: bool) {
         return;
     }
     let (view, doc): (&helix_view::View, &helix_view::Document) = current_ref!(editor);
-    let mut text = doc.text().slice(..);
+    let mut text = doc.text().char_slice(..);
     let cursor = doc.selection(view.id).primary().cursor(text);
-    text = doc.text().slice(..cursor);
+    text = doc.text().char_slice(..cursor);
 
     let is_trigger_char = doc
         .language_servers_with_feature(LanguageServerFeature::Completion)
@@ -221,7 +221,7 @@ fn completion_post_command_hook(
                     let primary_cursor = doc
                         .selection(view.id)
                         .primary()
-                        .cursor(doc.text().slice(..));
+                        .cursor(doc.text().char_slice(..));
                     CompletionEvent::DeleteText {
                         cursor: primary_cursor,
                     }

@@ -13,6 +13,7 @@ use crate::lsp::{
 use helix_core::{find_workspace, syntax::config::LanguageServerFeature, ChangeSet, Rope};
 use helix_loader::VERSION_AND_GIT_HASH;
 use helix_stdx::path;
+use helix_stdx::rope::ropey1_shims::*;
 use parking_lot::Mutex;
 use serde::Deserialize;
 use serde_json::Value;
@@ -862,7 +863,7 @@ impl Client {
             lsp::Position { line, character }
         }
 
-        let old_text = old_text.slice(..);
+        let old_text = old_text.char_slice(..);
 
         while let Some(change) = iter.next() {
             let len = match change {
@@ -877,7 +878,7 @@ impl Client {
                 }
                 Delete(_) => {
                     let start = pos_to_lsp_pos(new_text, new_pos, offset_encoding);
-                    let end = traverse(start, old_text.slice(old_pos..old_end), offset_encoding);
+                    let end = traverse(start, old_text.char_slice(old_pos..old_end), offset_encoding);
 
                     // deletion
                     changes.push(lsp::TextDocumentContentChangeEvent {
@@ -895,7 +896,7 @@ impl Client {
                     let end = if let Some(Delete(len)) = iter.peek() {
                         old_end = old_pos + len;
                         let end =
-                            traverse(start, old_text.slice(old_pos..old_end), offset_encoding);
+                            traverse(start, old_text.char_slice(old_pos..old_end), offset_encoding);
 
                         iter.next();
 

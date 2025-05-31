@@ -125,7 +125,7 @@ fn open(cx: &mut compositor::Context, args: Args, event: PromptEvent) -> anyhow:
             // Otherwise, just open the file
             let _ = cx.editor.open(&path, Action::Replace)?;
             let (view, doc) = current!(cx.editor);
-            let pos = Selection::point(pos_at_coords(doc.text().slice(..), pos, true));
+            let pos = Selection::point(pos_at_coords(doc.text().char_slice(..), pos, true));
             doc.set_selection(view.id, pos);
             // does not affect opening a buffer without pos
             align_view(doc, view, Align::Center);
@@ -396,13 +396,13 @@ fn trim_trailing_whitespace(doc: &mut Document, view_id: ViewId) {
 /// Trim any extra line-endings after the final line-ending.
 fn trim_final_newlines(doc: &mut Document, view_id: ViewId) {
     let rope = doc.text();
-    let mut text = rope.slice(..);
+    let mut text = rope.char_slice(..);
     let mut total_char_len = 0;
     let mut final_char_len = 0;
     while let Some(line_ending) = line_ending::get_line_ending(&text) {
         total_char_len += line_ending.len_chars();
         final_char_len = line_ending.len_chars();
-        text = text.slice(..text.len_chars() - line_ending.len_chars());
+        text = text.char_slice(..text.len_chars() - line_ending.len_chars());
     }
     let chars_to_delete = total_char_len - final_char_len;
     if chars_to_delete != 0 {
@@ -417,7 +417,7 @@ fn trim_final_newlines(doc: &mut Document, view_id: ViewId) {
 /// Ensure that the document is terminated with a line ending.
 fn insert_final_newline(doc: &mut Document, view_id: ViewId) {
     let text = doc.text();
-    if text.len_chars() > 0 && line_ending::get_line_ending(&text.slice(..)).is_none() {
+    if text.len_chars() > 0 && line_ending::get_line_ending(&text.char_slice(..)).is_none() {
         let eof = Selection::point(text.len_chars());
         let insert = Transaction::insert(text, &eof, doc.line_ending.as_str().into());
         doc.apply(&insert, view_id);
@@ -1208,7 +1208,7 @@ fn get_character_info(
     }
 
     let (view, doc) = current_ref!(cx.editor);
-    let text = doc.text().slice(..);
+    let text = doc.text().char_slice(..);
 
     let grapheme_start = doc.selection(view.id).primary().cursor(text);
     let grapheme_end = graphemes::next_grapheme_boundary(text, grapheme_start);
@@ -1217,7 +1217,7 @@ fn get_character_info(
         return Ok(());
     }
 
-    let grapheme = text.slice(grapheme_start..grapheme_end).to_string();
+    let grapheme = text.char_slice(grapheme_start..grapheme_end).to_string();
     let encoding = doc.encoding();
 
     let printable = grapheme.chars().fold(String::new(), |mut s, c| {
@@ -1645,7 +1645,7 @@ fn tree_sitter_scopes(
     }
 
     let (view, doc) = current!(cx.editor);
-    let text = doc.text().slice(..);
+    let text = doc.text().char_slice(..);
 
     let pos = doc.selection(view.id).primary().cursor(text);
     let scopes = indent::get_scopes(doc.syntax(), text, pos);
@@ -1678,7 +1678,7 @@ fn tree_sitter_highlight_name(
     fn find_highlight_at_cursor(editor: &Editor) -> Option<Highlight> {
         let (view, doc) = current_ref!(editor);
         let syntax = doc.syntax()?;
-        let text = doc.text().slice(..);
+        let text = doc.text().char_slice(..);
         let cursor = doc.selection(view.id).primary().cursor(text);
         let byte = text.char_to_byte(cursor) as u32;
         let node = syntax.descendant_for_byte_range(byte, byte)?;
@@ -2110,7 +2110,7 @@ fn sort(cx: &mut compositor::Context, args: Args, event: PromptEvent) -> anyhow:
 
     let scrolloff = cx.editor.config().scrolloff;
     let (view, doc) = current!(cx.editor);
-    let text = doc.text().slice(..);
+    let text = doc.text().char_slice(..);
 
     let selection = doc.selection(view.id);
 
@@ -2169,7 +2169,7 @@ fn reflow(cx: &mut compositor::Context, args: Args, event: PromptEvent) -> anyho
 
     let selection = doc.selection(view.id);
     let transaction = Transaction::change_by_selection(rope, selection, |range| {
-        let fragment = range.fragment(rope.slice(..));
+        let fragment = range.fragment(rope.char_slice(..));
         let reflowed_text = helix_core::wrap::reflow_hard_wrap(&fragment, text_width);
 
         (range.from(), range.to(), Some(reflowed_text))
@@ -2373,7 +2373,7 @@ fn reset_diff_change(
     };
 
     let diff = handle.load();
-    let doc_text = doc.text().slice(..);
+    let doc_text = doc.text().char_slice(..);
     let diff_base = diff.diff_base();
     let mut changes = 0;
 
@@ -2384,7 +2384,7 @@ fn reset_diff_change(
                 changes += 1;
                 let start = diff_base.line_to_char(hunk.before.start as usize);
                 let end = diff_base.line_to_char(hunk.before.end as usize);
-                let text: Tendril = diff_base.slice(start..end).chunks().collect();
+                let text: Tendril = diff_base.char_slice(start..end).chunks().collect();
                 (
                     doc_text.line_to_char(hunk.after.start as usize),
                     doc_text.line_to_char(hunk.after.end as usize),

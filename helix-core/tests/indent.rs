@@ -128,7 +128,7 @@ fn test_indent_level_for_line_with_spaces() {
 
     let line = ropey::Rope::from_str("        Indented with 8 spaces");
 
-    let indent_level = indent_level_for_line(line.slice(0..), tab_width, indent_width);
+    let indent_level = indent_level_for_line(line.char_slice(0..), tab_width, indent_width);
     assert_eq!(indent_level, 2)
 }
 
@@ -139,7 +139,7 @@ fn test_indent_level_for_line_with_tabs() {
 
     let line = ropey::Rope::from_str("\t\tIndented with 2 tabs");
 
-    let indent_level = indent_level_for_line(line.slice(0..), tab_width, indent_width);
+    let indent_level = indent_level_for_line(line.char_slice(0..), tab_width, indent_width);
     assert_eq!(indent_level, 2)
 }
 
@@ -150,7 +150,7 @@ fn test_indent_level_for_line_with_spaces_and_tabs() {
 
     let line = ropey::Rope::from_str("   \t \tIndented with mix of spaces and tabs");
 
-    let indent_level = indent_level_for_line(line.slice(0..), tab_width, indent_width);
+    let indent_level = indent_level_for_line(line.char_slice(0..), tab_width, indent_width);
     assert_eq!(indent_level, 2)
 }
 
@@ -198,7 +198,7 @@ fn test_treesitter_indent(
     let language = loader.language_for_scope(lang_scope).unwrap();
     let language_config = loader.language(language).config();
     let indent_style = IndentStyle::from_str(&language_config.indent.as_ref().unwrap().unit);
-    let text = doc.slice(..);
+    let text = doc.char_slice(..);
     let syntax = Syntax::new(text, language, &loader).unwrap();
     let indent_query = loader.indent_query(language).unwrap();
 
@@ -226,7 +226,7 @@ fn test_treesitter_indent(
                 "Wrong indentation for file {:?} on line {}:\n\"{}\" (original line)\n\"{}\" (suggested indentation)\n",
                 test_name,
                 i+1,
-                line.slice(..line.len_chars()-1),
+                line.char_slice(..line.len_chars()-1),
                 suggested_indent,
             );
         }

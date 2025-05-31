@@ -98,7 +98,7 @@ pub fn coords_at_pos(text: RopeSlice, pos: usize) -> Position {
 
     let line_start = text.line_to_char(line);
     let pos = ensure_grapheme_boundary_prev(text, pos);
-    let col = text.slice(line_start..pos).graphemes().count();
+    let col = text.char_slice(line_start..pos).graphemes().count();
 
     Position::new(line, col)
 }
@@ -123,7 +123,7 @@ pub fn visual_coords_at_pos(text: RopeSlice, pos: usize, tab_width: usize) -> Po
 
     let mut col = 0;
 
-    for grapheme in text.slice(line_start..pos).graphemes() {
+    for grapheme in text.char_slice(line_start..pos).graphemes() {
         if grapheme == "\t" {
             col += tab_width - (col % tab_width);
         } else {
@@ -272,7 +272,11 @@ pub fn pos_at_coords(text: RopeSlice, coords: Position, limit_before_line_ending
     };
 
     let mut col_char_offset = 0;
-    for (i, g) in text.slice(line_start..line_end).graphemes().enumerate() {
+    for (i, g) in text
+        .char_slice(line_start..line_end)
+        .graphemes()
+        .enumerate()
+    {
         if i == col {
             break;
         }
@@ -303,7 +307,7 @@ pub fn pos_at_visual_coords(text: RopeSlice, coords: Position, tab_width: usize)
 
     let mut col_char_offset = 0;
     let mut cols_remaining = col;
-    for grapheme in text.slice(line_start..line_end).graphemes() {
+    for grapheme in text.char_slice(line_start..line_end).graphemes() {
         let grapheme_width = if grapheme == "\t" {
             tab_width - ((col - cols_remaining) % tab_width)
         } else {
@@ -457,7 +461,7 @@ mod test {
     #[test]
     fn test_coords_at_pos() {
         let text = Rope::from("ḧëḷḷö\nẅöṛḷḋ");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(coords_at_pos(slice, 0), (0, 0).into());
         assert_eq!(coords_at_pos(slice, 5), (0, 5).into()); // position on \n
         assert_eq!(coords_at_pos(slice, 6), (1, 0).into()); // position on w
@@ -466,7 +470,7 @@ mod test {
 
         // Test with wide characters.
         let text = Rope::from("今日はいい\n");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(coords_at_pos(slice, 0), (0, 0).into());
         assert_eq!(coords_at_pos(slice, 1), (0, 1).into());
         assert_eq!(coords_at_pos(slice, 2), (0, 2).into());
@@ -477,7 +481,7 @@ mod test {
 
         // Test with grapheme clusters.
         let text = Rope::from("a̐éö̲\r\n");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(coords_at_pos(slice, 0), (0, 0).into());
         assert_eq!(coords_at_pos(slice, 2), (0, 1).into());
         assert_eq!(coords_at_pos(slice, 4), (0, 2).into());
@@ -486,7 +490,7 @@ mod test {
 
         // Test with wide-character grapheme clusters.
         let text = Rope::from("किमपि\n");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(coords_at_pos(slice, 0), (0, 0).into());
         assert_eq!(coords_at_pos(slice, 2), (0, 1).into());
         assert_eq!(coords_at_pos(slice, 3), (0, 2).into());
@@ -495,7 +499,7 @@ mod test {
 
         // Test with tabs.
         let text = Rope::from("\tHello\n");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(coords_at_pos(slice, 0), (0, 0).into());
         assert_eq!(coords_at_pos(slice, 1), (0, 1).into());
         assert_eq!(coords_at_pos(slice, 2), (0, 2).into());
@@ -505,7 +509,7 @@ mod test {
     #[allow(deprecated)]
     fn test_visual_coords_at_pos() {
         let text = Rope::from("ḧëḷḷö\nẅöṛḷḋ");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(visual_coords_at_pos(slice, 0, 8), (0, 0).into());
         assert_eq!(visual_coords_at_pos(slice, 5, 8), (0, 5).into()); // position on \n
         assert_eq!(visual_coords_at_pos(slice, 6, 8), (1, 0).into()); // position on w
@@ -514,7 +518,7 @@ mod test {
 
         // Test with wide characters.
         let text = Rope::from("今日はいい\n");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(visual_coords_at_pos(slice, 0, 8), (0, 0).into());
         assert_eq!(visual_coords_at_pos(slice, 1, 8), (0, 2).into());
         assert_eq!(visual_coords_at_pos(slice, 2, 8), (0, 4).into());
@@ -525,7 +529,7 @@ mod test {
 
         // Test with grapheme clusters.
         let text = Rope::from("a̐éö̲\r\n");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(visual_coords_at_pos(slice, 0, 8), (0, 0).into());
         assert_eq!(visual_coords_at_pos(slice, 2, 8), (0, 1).into());
         assert_eq!(visual_coords_at_pos(slice, 4, 8), (0, 2).into());
@@ -535,7 +539,7 @@ mod test {
         // Test with wide-character grapheme clusters.
         // TODO: account for cluster.
         let text = Rope::from("किमपि\n");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(visual_coords_at_pos(slice, 0, 8), (0, 0).into());
         assert_eq!(visual_coords_at_pos(slice, 2, 8), (0, 2).into());
         assert_eq!(visual_coords_at_pos(slice, 3, 8), (0, 3).into());
@@ -544,7 +548,7 @@ mod test {
 
         // Test with tabs.
         let text = Rope::from("\tHello\n");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(visual_coords_at_pos(slice, 0, 8), (0, 0).into());
         assert_eq!(visual_coords_at_pos(slice, 1, 8), (0, 8).into());
         assert_eq!(visual_coords_at_pos(slice, 2, 8), (0, 9).into());
@@ -553,7 +557,7 @@ mod test {
     #[test]
     fn test_visual_off_from_block() {
         let text = Rope::from("ḧëḷḷö\nẅöṛḷḋ");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         let annot = TextAnnotations::default();
         let text_fmt = TextFormat::default();
         assert_eq!(
@@ -579,7 +583,7 @@ mod test {
 
         // Test with wide characters.
         let text = Rope::from("今日はいい\n");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(
             visual_offset_from_block(slice, 0, 0, &text_fmt, &annot).0,
             (0, 0).into()
@@ -611,7 +615,7 @@ mod test {
 
         // Test with grapheme clusters.
         let text = Rope::from("a̐éö̲\r\n");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(
             visual_offset_from_block(slice, 0, 0, &text_fmt, &annot).0,
             (0, 0).into()
@@ -636,7 +640,7 @@ mod test {
         // Test with wide-character grapheme clusters.
         // TODO: account for cluster.
         let text = Rope::from("किमपि\n");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(
             visual_offset_from_block(slice, 0, 0, &text_fmt, &annot).0,
             (0, 0).into()
@@ -660,7 +664,7 @@ mod test {
 
         // Test with tabs.
         let text = Rope::from("\tHello\n");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(
             visual_offset_from_block(slice, 0, 0, &text_fmt, &annot).0,
             (0, 0).into()
@@ -677,7 +681,7 @@ mod test {
     #[test]
     fn test_pos_at_coords() {
         let text = Rope::from("ḧëḷḷö\nẅöṛḷḋ");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(pos_at_coords(slice, (0, 0).into(), false), 0);
         assert_eq!(pos_at_coords(slice, (0, 5).into(), false), 5); // position on \n
         assert_eq!(pos_at_coords(slice, (0, 6).into(), false), 6); // position after \n
@@ -689,7 +693,7 @@ mod test {
         // Test with wide characters.
         // TODO: account for character width.
         let text = Rope::from("今日はいい\n");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(pos_at_coords(slice, (0, 0).into(), false), 0);
         assert_eq!(pos_at_coords(slice, (0, 1).into(), false), 1);
         assert_eq!(pos_at_coords(slice, (0, 2).into(), false), 2);
@@ -702,7 +706,7 @@ mod test {
 
         // Test with grapheme clusters.
         let text = Rope::from("a̐éö̲\r\n");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(pos_at_coords(slice, (0, 0).into(), false), 0);
         assert_eq!(pos_at_coords(slice, (0, 1).into(), false), 2);
         assert_eq!(pos_at_coords(slice, (0, 2).into(), false), 4);
@@ -716,7 +720,7 @@ mod test {
         let text = Rope::from("किमपि");
         // 2 - 1 - 2 codepoints
         // TODO: delete handling as per https://news.ycombinator.com/item?id=20058454
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(pos_at_coords(slice, (0, 0).into(), false), 0);
         assert_eq!(pos_at_coords(slice, (0, 1).into(), false), 2);
         assert_eq!(pos_at_coords(slice, (0, 2).into(), false), 3);
@@ -726,14 +730,14 @@ mod test {
         // Test with tabs.
         // Todo: account for tab stops.
         let text = Rope::from("\tHello\n");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(pos_at_coords(slice, (0, 0).into(), false), 0);
         assert_eq!(pos_at_coords(slice, (0, 1).into(), false), 1);
         assert_eq!(pos_at_coords(slice, (0, 2).into(), false), 2);
 
         // Test out of bounds.
         let text = Rope::new();
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(pos_at_coords(slice, (10, 0).into(), true), 0);
         assert_eq!(pos_at_coords(slice, (0, 10).into(), true), 0);
         assert_eq!(pos_at_coords(slice, (10, 10).into(), true), 0);
@@ -743,7 +747,7 @@ mod test {
     #[allow(deprecated)]
     fn test_pos_at_visual_coords() {
         let text = Rope::from("ḧëḷḷö\nẅöṛḷḋ");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(pos_at_visual_coords(slice, (0, 0).into(), 4), 0);
         assert_eq!(pos_at_visual_coords(slice, (0, 5).into(), 4), 5); // position on \n
         assert_eq!(pos_at_visual_coords(slice, (0, 6).into(), 4), 5); // position after \n
@@ -753,7 +757,7 @@ mod test {
 
         // Test with wide characters.
         let text = Rope::from("今日はいい\n");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(pos_at_visual_coords(slice, (0, 0).into(), 4), 0);
         assert_eq!(pos_at_visual_coords(slice, (0, 1).into(), 4), 0);
         assert_eq!(pos_at_visual_coords(slice, (0, 2).into(), 4), 1);
@@ -770,7 +774,7 @@ mod test {
 
         // Test with grapheme clusters.
         let text = Rope::from("a̐éö̲\r\n");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(pos_at_visual_coords(slice, (0, 0).into(), 4), 0);
         assert_eq!(pos_at_visual_coords(slice, (0, 1).into(), 4), 2);
         assert_eq!(pos_at_visual_coords(slice, (0, 2).into(), 4), 4);
@@ -782,7 +786,7 @@ mod test {
         let text = Rope::from("किमपि");
         // 2 - 1 - 2 codepoints
         // TODO: delete handling as per https://news.ycombinator.com/item?id=20058454
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(pos_at_visual_coords(slice, (0, 0).into(), 4), 0);
         assert_eq!(pos_at_visual_coords(slice, (0, 1).into(), 4), 0);
         assert_eq!(pos_at_visual_coords(slice, (0, 2).into(), 4), 2);
@@ -790,7 +794,7 @@ mod test {
 
         // Test with tabs.
         let text = Rope::from("\tHello\n");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(pos_at_visual_coords(slice, (0, 0).into(), 4), 0);
         assert_eq!(pos_at_visual_coords(slice, (0, 1).into(), 4), 0);
         assert_eq!(pos_at_visual_coords(slice, (0, 2).into(), 4), 0);
@@ -800,7 +804,7 @@ mod test {
 
         // Test out of bounds.
         let text = Rope::new();
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(pos_at_visual_coords(slice, (10, 0).into(), 4), 0);
         assert_eq!(pos_at_visual_coords(slice, (0, 10).into(), 4), 0);
         assert_eq!(pos_at_visual_coords(slice, (10, 10).into(), 4), 0);
@@ -809,7 +813,7 @@ mod test {
     #[test]
     fn test_char_idx_at_visual_row_offset_inline_annotation() {
         let text = Rope::from("foo\nbar");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         let mut text_fmt = TextFormat::default();
         let annotations = [InlineAnnotation {
             text: "x".repeat(100).into(),
@@ -833,7 +837,7 @@ mod test {
     #[test]
     fn test_char_idx_at_visual_row_offset() {
         let text = Rope::from("ḧëḷḷö\nẅöṛḷḋ\nfoo");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         let mut text_fmt = TextFormat::default();
         for i in 0isize..3isize {
             for j in -2isize..=2isize {
@@ -862,7 +866,7 @@ mod test {
         let last_char = softwrapped_text.len() - 1;
 
         let text = Rope::from(softwrapped_text.repeat(3));
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         assert_eq!(
             char_idx_at_visual_offset(
                 slice,

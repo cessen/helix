@@ -9,6 +9,7 @@ use helix_core::syntax::config::{DebugArgumentValue, DebugConfigCompletion, Debu
 use helix_dap::{self as dap, Client};
 use helix_lsp::block_on;
 use helix_view::editor::Breakpoint;
+use helix_stdx::rope::ropey1_shims::*;
 
 use serde_json::{to_value, Value};
 use tokio_stream::wrappers::UnboundedReceiverStream;
@@ -75,7 +76,7 @@ fn thread_picker(
 
 fn get_breakpoint_at_current_line(editor: &mut Editor) -> Option<(usize, Breakpoint)> {
     let (view, doc) = current!(editor);
-    let text = doc.text().slice(..);
+    let text = doc.text().char_slice(..);
 
     let line = doc.selection(view.id).primary().cursor_line(text);
     let path = doc.path()?;
@@ -393,7 +394,7 @@ pub fn dap_toggle_breakpoint(cx: &mut Context) {
             return;
         }
     };
-    let text = doc.text().slice(..);
+    let text = doc.text().char_slice(..);
     let line = doc.selection(view.id).primary().cursor_line(text);
     dap_toggle_breakpoint_impl(cx, path, line);
 }

@@ -1075,7 +1075,7 @@ pub fn hover(cx: &mut Context) {
 pub fn rename_symbol(cx: &mut Context) {
     fn get_prefill_from_word_boundary(editor: &Editor) -> String {
         let (view, doc) = current_ref!(editor);
-        let text = doc.text().slice(..);
+        let text = doc.text().char_slice(..);
         let primary_selection = doc.selection(view.id).primary();
         if primary_selection.len() > 1 {
             primary_selection
@@ -1098,7 +1098,7 @@ pub fn rename_symbol(cx: &mut Context) {
 
                 Ok(lsp_range_to_range(text, range, offset_encoding)
                     .ok_or("lsp sent invalid selection range for rename")?
-                    .fragment(text.slice(..))
+                    .fragment(text.char_slice(..))
                     .into())
             }
             Some(lsp::PrepareRenameResponse::RangeWithPlaceholder { placeholder, .. }) => {
@@ -1232,7 +1232,7 @@ pub fn select_references_to_symbol_under_cursor(cx: &mut Context) {
             };
             let (view, doc) = current!(editor);
             let text = doc.text();
-            let pos = doc.selection(view.id).primary().cursor(text.slice(..));
+            let pos = doc.selection(view.id).primary().cursor(text.char_slice(..));
 
             // We must find the range that contains our primary cursor to prevent our primary cursor to move
             let mut primary_index = 0;
@@ -1308,7 +1308,7 @@ fn compute_inlay_hints_for_view(
         return None;
     }
 
-    let doc_slice = doc_text.slice(..);
+    let doc_slice = doc_text.char_slice(..);
     let first_char_in_range = doc_slice.line_to_char(first_line);
     let last_char_in_range = doc_slice.line_to_char(last_line);
 

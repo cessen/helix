@@ -688,7 +688,7 @@ impl Document {
     ) -> Self {
         let (encoding, has_bom) = encoding_with_bom_info.unwrap_or((encoding::UTF_8, false));
         let line_ending = config.load().default_line_ending.into();
-        let changes = ChangeSet::new(text.slice(..));
+        let changes = ChangeSet::new(text.char_slice(..));
         let old_state = None;
 
         Self {
@@ -1145,7 +1145,7 @@ impl Document {
     ) -> Option<Arc<syntax::config::LanguageConfiguration>> {
         let language = loader
             .language_for_filename(self.path.as_ref()?)
-            .or_else(|| loader.language_for_shebang(self.text().slice(..)))?;
+            .or_else(|| loader.language_for_shebang(self.text().char_slice(..)))?;
 
         Some(loader.language(language).config().clone())
     }
@@ -1291,7 +1291,7 @@ impl Document {
     ) {
         self.language = language_config;
         self.syntax = self.language.as_ref().and_then(|config| {
-            Syntax::new(self.text.slice(..), config.language(), loader)
+            Syntax::new(self.text.char_slice(..), config.language(), loader)
                 .map_err(|err| {
                     // `NoRootConfig` means that there was an issue loading the language/syntax
                     // config for the root language of the document. An error must have already
@@ -1323,7 +1323,7 @@ impl Document {
     pub fn set_selection(&mut self, view_id: ViewId, selection: Selection) {
         // TODO: use a transaction?
         self.selections
-            .insert(view_id, selection.ensure_invariants(self.text().slice(..)));
+            .insert(view_id, selection.ensure_invariants(self.text().char_slice(..)));
         helix_event::dispatch(SelectionDidChange {
             doc: self,
             view: view_id,
@@ -1338,7 +1338,7 @@ impl Document {
             return Range::new(0, 0);
         }
 
-        Range::new(0, 1).grapheme_aligned(self.text().slice(..))
+        Range::new(0, 1).grapheme_aligned(self.text().char_slice(..))
     }
 
     /// Reset the view's selection on this document to the
@@ -1389,7 +1389,7 @@ impl Document {
             if let Some(selection) = transaction.selection() {
                 self.selections.insert(
                     view_id,
-                    selection.clone().ensure_invariants(self.text.slice(..)),
+                    selection.clone().ensure_invariants(self.text.char_slice(..)),
                 );
                 helix_event::dispatch(SelectionDidChange {
                     doc: self,
@@ -1408,7 +1408,7 @@ impl Document {
                 // Map through changes
                 .map(transaction.changes())
                 // Ensure all selections across all views still adhere to invariants.
-                .ensure_invariants(self.text.slice(..));
+                .ensure_invariants(self.text.char_slice(..));
         }
 
         for view_data in self.view_data.values_mut() {
@@ -1436,8 +1436,8 @@ impl Document {
         if let Some(syntax) = &mut self.syntax {
             let loader = self.syn_loader.load();
             if let Err(err) = syntax.update(
-                old_doc.slice(..),
-                self.text.slice(..),
+                old_doc.char_slice(..),
+                self.text.char_slice(..),
                 transaction.changes(),
                 &loader,
             ) {
@@ -1531,7 +1531,7 @@ impl Document {
         if let Some(selection) = transaction.selection() {
             self.selections.insert(
                 view_id,
-                selection.clone().ensure_invariants(self.text.slice(..)),
+                selection.clone().ensure_invariants(self.text.char_slice(..)),
             );
             helix_event::dispatch(SelectionDidChange {
                 doc: self,
@@ -1596,7 +1596,7 @@ impl Document {
 
         if success {
             // reset changeset to fix len
-            self.changes = ChangeSet::new(self.text().slice(..));
+            self.changes = ChangeSet::new(self.text().char_slice(..));
             // Sync with changes with the jumplist selections.
             view.sync_changes(self);
         }
@@ -1683,7 +1683,7 @@ impl Document {
         }
         if success {
             // reset changeset to fix len
-            self.changes = ChangeSet::new(self.text().slice(..));
+            self.changes = ChangeSet::new(self.text().char_slice(..));
             // Sync with changes with the jumplist selections.
             view.sync_changes(self);
         }
@@ -1706,7 +1706,7 @@ impl Document {
             return;
         }
 
-        let new_changeset = ChangeSet::new(self.text().slice(..));
+        let new_changeset = ChangeSet::new(self.text().char_slice(..));
         let changes = std::mem::replace(&mut self.changes, new_changeset);
         // Instead of doing this messy merge we could always commit, and based on transaction
         // annotations either add a new layer or compose into the previous one.
@@ -2014,7 +2014,7 @@ impl Document {
 
         helix_lsp::util::pos_to_lsp_pos(
             text,
-            self.selection(view_id).primary().cursor(text.slice(..)),
+            self.selection(view_id).primary().cursor(text.char_slice(..)),
             offset_encoding,
         )
     }

@@ -984,12 +984,12 @@ mod test {
         let grammar = LOADER.get_config(language).unwrap().grammar;
         let query = Query::new(grammar, query_str, |_, _| Ok(())).unwrap();
         let textobject = TextObjectQuery::new(query);
-        let syntax = Syntax::new(source.slice(..), language, &LOADER).unwrap();
+        let syntax = Syntax::new(source.char_slice(..), language, &LOADER).unwrap();
 
         let root = syntax.tree().root_node();
         let test = |capture, range| {
             let matches: Vec<_> = textobject
-                .capture_nodes(capture, &root, source.slice(..))
+                .capture_nodes(capture, &root, source.char_slice(..))
                 .unwrap()
                 .collect();
 
@@ -1017,7 +1017,7 @@ mod test {
             &doc,
             vec![(6, 11, Some("test".into())), (12, 17, None)].into_iter(),
         );
-        let edits = generate_edits(doc.slice(..), transaction.changes());
+        let edits = generate_edits(doc.char_slice(..), transaction.changes());
         // transaction.apply(&mut state);
 
         assert_eq!(
@@ -1046,7 +1046,7 @@ mod test {
         let mut doc = Rope::from("fn test() {}");
         let transaction =
             Transaction::change(&doc, vec![(8, 8, Some("a: u32".into()))].into_iter());
-        let edits = generate_edits(doc.slice(..), transaction.changes());
+        let edits = generate_edits(doc.char_slice(..), transaction.changes());
         transaction.apply(&mut doc);
 
         assert_eq!(doc, "fn test(a: u32) {}");
@@ -1073,7 +1073,7 @@ mod test {
     ) {
         let source = Rope::from_str(source);
         let language = LOADER.language_for_name(language_name).unwrap();
-        let syntax = Syntax::new(source.slice(..), language, &LOADER).unwrap();
+        let syntax = Syntax::new(source.char_slice(..), language, &LOADER).unwrap();
 
         let root = syntax
             .tree()

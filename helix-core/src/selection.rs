@@ -252,7 +252,7 @@ impl Range {
     /// using `slice` instead if you do not need a `Cow` or `String` to avoid copying.
     #[inline]
     pub fn fragment<'a, 'b: 'a>(&'a self, text: RopeSlice<'b>) -> Cow<'b, str> {
-        self.slice(text).into()
+        self.char_slice(text).into()
     }
 
     /// Returns the text inside this range given the text of the whole buffer.
@@ -260,8 +260,8 @@ impl Range {
     /// The returned value is a reference to the passed slice. This method never
     /// copies any contents.
     #[inline]
-    pub fn slice<'a, 'b: 'a>(&'a self, text: RopeSlice<'b>) -> RopeSlice<'b> {
-        text.slice(self.from()..self.to())
+    pub fn char_slice<'a, 'b: 'a>(&'a self, text: RopeSlice<'b>) -> RopeSlice<'b> {
+        text.char_slice(self.from()..self.to())
     }
 
     //--------------------------------
@@ -379,7 +379,7 @@ impl Range {
 
     /// Returns true if this Range covers a single grapheme in the given text
     pub fn is_single_grapheme(&self, doc: RopeSlice) -> bool {
-        let mut graphemes = doc.slice(self.from()..self.to()).graphemes();
+        let mut graphemes = doc.char_slice(self.from()..self.to()).graphemes();
         let first = graphemes.next();
         let second = graphemes.next();
         first.is_some() && second.is_none()
@@ -683,7 +683,7 @@ impl Selection {
         text: RopeSlice<'a>,
     ) -> impl DoubleEndedIterator<Item = RopeSlice<'a>> + ExactSizeIterator<Item = RopeSlice<'a>> + 'a
     {
-        self.ranges.iter().map(move |range| range.slice(text))
+        self.ranges.iter().map(move |range| range.char_slice(text))
     }
 
     #[inline(always)]
@@ -830,7 +830,7 @@ pub fn split_on_newline(text: RopeSlice, selection: &Selection) -> Selection {
 
         let mut start = sel_start;
 
-        for line in sel.slice(text).lines(LINE_TYPE) {
+        for line in sel.char_slice(text).lines(LINE_TYPE) {
             let Some(line_ending) = get_line_ending(&line) else {
                 break;
             };
@@ -1025,7 +1025,7 @@ mod test {
     #[test]
     fn test_grapheme_aligned() {
         let r = Rope::from_str("\r\nHi\r\n");
-        let s = r.slice(..);
+        let s = r.char_slice(..);
 
         // Zero-width.
         assert_eq!(Range::new(0, 0).grapheme_aligned(s), Range::new(0, 0));
@@ -1068,7 +1068,7 @@ mod test {
     #[test]
     fn test_min_width_1() {
         let r = Rope::from_str("\r\nHi\r\n");
-        let s = r.slice(..);
+        let s = r.char_slice(..);
 
         // Zero-width.
         assert_eq!(Range::new(0, 0).min_width_1(s), Range::new(0, 2));
@@ -1099,7 +1099,7 @@ mod test {
     #[test]
     fn test_select_on_matches() {
         let r = Rope::from_str("Nobody expects the Spanish inquisition");
-        let s = r.slice(..);
+        let s = r.char_slice(..);
 
         let selection = Selection::single(0, r.len_chars());
         assert_eq!(
@@ -1111,7 +1111,7 @@ mod test {
         );
 
         let r = Rope::from_str("This\nString\n\ncontains multiple\nlines");
-        let s = r.slice(..);
+        let s = r.char_slice(..);
 
         let start_of_line = rope::RegexBuilder::new()
             .syntax(rope::Config::new().multi_line(true))
@@ -1173,7 +1173,7 @@ mod test {
     #[test]
     fn test_line_range() {
         let r = Rope::from_str("\r\nHi\r\nthere!");
-        let s = r.slice(..);
+        let s = r.char_slice(..);
 
         // Zero-width ranges.
         assert_eq!(Range::new(0, 0).line_range(s), (0, 0));
@@ -1222,14 +1222,16 @@ mod test {
         let rope = Rope::from_str(&text);
         assert_eq!(
             vec![(1, 1), (3, 3), (5, 6), (8, 10), (12, 13)],
-            selection.line_ranges(rope.slice(..)).collect::<Vec<_>>(),
+            selection
+                .line_ranges(rope.char_slice(..))
+                .collect::<Vec<_>>(),
         );
     }
 
     #[test]
     fn test_cursor() {
         let r = Rope::from_str("\r\nHi\r\nthere!");
-        let s = r.slice(..);
+        let s = r.char_slice(..);
 
         // Zero-width ranges.
         assert_eq!(Range::new(0, 0).cursor(s), 0);
@@ -1250,7 +1252,7 @@ mod test {
     #[test]
     fn test_put_cursor() {
         let r = Rope::from_str("\r\nHi\r\nthere!");
-        let s = r.slice(..);
+        let s = r.char_slice(..);
 
         // Zero-width ranges.
         assert_eq!(Range::new(0, 0).put_cursor(s, 0, true), Range::new(0, 2));
@@ -1283,7 +1285,7 @@ mod test {
         let selection = Selection::new(smallvec![Range::new(0, 9), Range::new(11, 20),], 0);
 
         let result = split_on_matches(
-            text.slice(..),
+            text.char_slice(..),
             &selection,
             &rope::Regex::new(r"\s+").unwrap(),
         );
@@ -1311,7 +1313,7 @@ mod test {
         );
 
         assert_eq!(
-            result.fragments(text.slice(..)).collect::<Vec<_>>(),
+            result.fragments(text.char_slice(..)).collect::<Vec<_>>(),
             &["", "abcd", "efg", "rs", "xyz"]
         );
     }

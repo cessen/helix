@@ -755,6 +755,11 @@ impl<T: 'static + Send + Sync, D: 'static + Send + Sync> Picker<T, D> {
                 };
                 let mut cell = column.format(item.data, &self.editor_data);
                 let width = if column.filter {
+                    // Note for the future when converting Helix to use byte
+                    // indices: the `.slice()` below is a method on Nucleo's
+                    // Utf32String type, which works in terms of char indices.
+                    // It is not Ropey 2's version that work in terms of byte
+                    // indices.
                     snapshot.pattern().column_pattern(matcher_index).indices(
                         item.matcher_columns[matcher_index].slice(..),
                         &mut matcher,
@@ -917,7 +922,7 @@ impl<T: 'static + Send + Sync, D: 'static + Send + Sync> Picker<T, D> {
             let mut offset = ViewPosition::default();
             if let Some((start_line, end_line)) = range {
                 let height = end_line - start_line;
-                let text = doc.text().slice(..);
+                let text = doc.text().char_slice(..);
                 let start = text.line_to_char(start_line);
                 let middle = text.line_to_char(start_line + height / 2);
                 if height < inner.height as usize {

@@ -191,7 +191,7 @@ impl Application {
                         let selection = pos
                             .into_iter()
                             .map(|coords| {
-                                Range::point(pos_at_coords(doc.text().slice(..), coords, true))
+                                Range::point(pos_at_coords(doc.text().char_slice(..), coords, true))
                             })
                             .collect();
                         doc.set_selection(view_id, selection);

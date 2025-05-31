@@ -3,6 +3,7 @@ use std::{borrow::Cow, collections::HashMap, iter};
 use anyhow::Result;
 use arc_swap::access::DynAccess;
 use helix_core::NATIVE_LINE_ENDING;
+use helix_stdx::rope::ropey1_shims::*;
 
 use crate::{
     clipboard::{ClipboardError, ClipboardProvider, ClipboardType},
@@ -54,7 +55,7 @@ impl Registers {
             }
             '.' => {
                 let (view, doc) = current_ref!(editor);
-                let text = doc.text().slice(..);
+                let text = doc.text().char_slice(..);
                 Some(RegisterValues::new(doc.selection(view.id).fragments(text)))
             }
             '%' => {

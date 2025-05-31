@@ -327,7 +327,7 @@ impl Transform {
             .regex
             .captures_iter(doc.regex_input_at(range))
             .enumerate();
-        doc = doc.slice(range);
+        doc = doc.char_slice(range);
         let mut last_match = 0;
         for (_, cap) in it {
             // unwrap on 0 is OK because captures only reports matches

@@ -5,6 +5,7 @@ use std::{
 };
 
 use helix_event::AsyncHook;
+use helix_stdx::rope::ropey1_shims::*;
 use tokio::time::Instant;
 
 use crate::{job, ui::overlay::Overlay};
@@ -79,7 +80,7 @@ impl<T: 'static + Send + Sync, D: 'static + Send + Sync> AsyncHook
             let text = doc.text().clone();
 
             tokio::task::spawn_blocking(move || {
-                let syntax = match helix_core::Syntax::new(text.slice(..), language, &loader) {
+                let syntax = match helix_core::Syntax::new(text.char_slice(..), language, &loader) {
                     Ok(syntax) => syntax,
                     Err(err) => {
                         log::info!("highlighting picker preview failed: {err}");

@@ -48,7 +48,7 @@ pub fn render_document(
     );
     render_text(
         &mut renderer,
-        doc.text().slice(..),
+        doc.text().char_slice(..),
         offset.anchor,
         &doc.text_format(viewport.width, Some(theme)),
         doc_annotations,

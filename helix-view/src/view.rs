@@ -105,7 +105,7 @@ impl JumpList {
     /// This is necessary to ensure that changes to documents do not leave jump-list
     /// selections pointing to parts of the text which no longer exist.
     fn apply(&mut self, transaction: &Transaction, doc: &Document) {
-        let text = doc.text().slice(..);
+        let text = doc.text().char_slice(..);
 
         for (doc_id, selection) in &mut self.jumps {
             if doc.id() == *doc_id {
@@ -235,7 +235,7 @@ impl View {
         scrolloff: usize,
     ) -> Option<ViewPosition> {
         let view_offset = doc.get_view_offset(self.id)?;
-        let doc_text = doc.text().slice(..);
+        let doc_text = doc.text().char_slice(..);
         let viewport = self.inner_area(doc);
         let vertical_viewport_end = view_offset.vertical_offset + viewport.height as usize;
         let text_fmt = doc.text_format(viewport.width, None);
@@ -358,7 +358,7 @@ impl View {
     /// or virtual text lines are visible
     #[inline]
     pub fn estimate_last_doc_line(&self, doc: &Document) -> usize {
-        let doc_text = doc.text().slice(..);
+        let doc_text = doc.text().char_slice(..);
         let line = doc_text.char_to_line(doc.view_offset(self.id).anchor.min(doc_text.len_chars()));
         // Saturating subs to make it inclusive zero indexing.
         (line + self.inner_height())
@@ -369,7 +369,7 @@ impl View {
     /// Calculates the last non-empty visual line on screen
     #[inline]
     pub fn last_visual_line(&self, doc: &Document) -> usize {
-        let doc_text = doc.text().slice(..);
+        let doc_text = doc.text().char_slice(..);
         let viewport = self.inner_area(doc);
         let text_fmt = doc.text_format(viewport.width, None);
         let annotations = self.text_annotations(doc, None);
@@ -501,7 +501,7 @@ impl View {
             let cursor = doc
                 .selection(self.id)
                 .primary()
-                .cursor(doc.text().slice(..));
+                .cursor(doc.text().char_slice(..));
             text_annotations.add_line_annotation(InlineDiagnostics::new(
                 doc,
                 cursor,
@@ -552,7 +552,7 @@ impl View {
         annotations: &TextAnnotations,
         ignore_virtual_text: bool,
     ) -> Option<usize> {
-        let text = doc.text().slice(..);
+        let text = doc.text().char_slice(..);
         let view_offset = doc.view_offset(self.id);
 
         let text_row = row as usize + view_offset.vertical_offset;

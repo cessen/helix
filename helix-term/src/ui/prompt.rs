@@ -2,6 +2,7 @@ use crate::compositor::{Component, Compositor, Context, Event, EventResult};
 use crate::{alt, ctrl, key, shift, ui};
 use arc_swap::ArcSwap;
 use helix_core::syntax;
+use helix_stdx::rope::ropey1_shims::*;
 use helix_view::document::Mode;
 use helix_view::input::KeyEvent;
 use helix_view::keyboard::KeyCode;
@@ -620,7 +621,7 @@ impl Component for Prompt {
             }
             ctrl!('s') => {
                 let (view, doc) = current!(cx.editor);
-                let text = doc.text().slice(..);
+                let text = doc.text().char_slice(..);
 
                 use helix_core::textobject;
                 let range = textobject::textobject_word(
@@ -630,7 +631,7 @@ impl Component for Prompt {
                     1,
                     false,
                 );
-                let line = text.slice(range.from()..range.to()).to_string();
+                let line = text.char_slice(range.from()..range.to()).to_string();
                 if !line.is_empty() {
                     self.insert_str(line.as_str(), cx.editor);
                     (self.callback_fn)(cx, &self.line, PromptEvent::Update);

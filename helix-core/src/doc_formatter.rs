@@ -221,7 +221,7 @@ impl<'t> DocumentFormatter<'t> {
             text_fmt,
             annotations,
             visual_pos: Position { row: 0, col: 0 },
-            graphemes: text.slice(block_char_idx..).graphemes(),
+            graphemes: text.char_slice(block_char_idx..).graphemes(),
             char_pos: block_char_idx,
             exhausted: false,
             indent_level: None,

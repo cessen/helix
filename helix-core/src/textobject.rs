@@ -400,7 +400,7 @@ mod test {
 
         for (sample, scenario) in tests {
             let doc = Rope::from(*sample);
-            let slice = doc.slice(..);
+            let slice = doc.char_slice(..);
             for &case in scenario {
                 let (pos, objtype, expected_range) = case;
                 // cursor is a single width selection
@@ -442,7 +442,7 @@ mod test {
             let (s, selection) = crate::test::print(before);
             let text = Rope::from(s.as_str());
             let selection = selection
-                .transform(|r| textobject_paragraph(text.slice(..), r, TextObject::Inside, 1));
+                .transform(|r| textobject_paragraph(text.char_slice(..), r, TextObject::Inside, 1));
             let actual = crate::test::plain(s.as_ref(), &selection);
             assert_eq!(actual, expected, "\nbefore: `{:?}`", before);
         }
@@ -465,7 +465,7 @@ mod test {
             let (s, selection) = crate::test::print(before);
             let text = Rope::from(s.as_str());
             let selection = selection
-                .transform(|r| textobject_paragraph(text.slice(..), r, TextObject::Inside, 2));
+                .transform(|r| textobject_paragraph(text.char_slice(..), r, TextObject::Inside, 2));
             let actual = crate::test::plain(s.as_ref(), &selection);
             assert_eq!(actual, expected, "\nbefore: `{:?}`", before);
         }
@@ -496,7 +496,7 @@ mod test {
             let (s, selection) = crate::test::print(before);
             let text = Rope::from(s.as_str());
             let selection = selection
-                .transform(|r| textobject_paragraph(text.slice(..), r, TextObject::Around, 1));
+                .transform(|r| textobject_paragraph(text.char_slice(..), r, TextObject::Around, 1));
             let actual = crate::test::plain(s.as_ref(), &selection);
             assert_eq!(actual, expected, "\nbefore: `{:?}`", before);
         }
@@ -577,7 +577,7 @@ mod test {
 
         for (sample, scenario) in tests {
             let doc = Rope::from(*sample);
-            let slice = doc.slice(..);
+            let slice = doc.char_slice(..);
             for &case in scenario {
                 let (pos, objtype, expected_range, ch, count) = case;
                 let result =

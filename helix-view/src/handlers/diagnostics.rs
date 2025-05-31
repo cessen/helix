@@ -5,6 +5,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use helix_event::{request_redraw, send_blocking, AsyncHook};
+use helix_stdx::rope::ropey1_shims::*;
 use tokio::sync::mpsc::Sender;
 use tokio::time::Instant;
 
@@ -99,7 +100,7 @@ impl DiagnosticsHandler {
         let cursor_line = doc
             .selection(view)
             .primary()
-            .cursor_line(doc.text().slice(..));
+            .cursor_line(doc.text().char_slice(..));
         self.last_cursor_line.set(cursor_line);
         self.active_generation
             .store(self.generation.get(), atomic::Ordering::Relaxed);
@@ -111,7 +112,7 @@ impl DiagnosticsHandler {
         let cursor_line = doc
             .selection(view)
             .primary()
-            .cursor_line(doc.text().slice(..));
+            .cursor_line(doc.text().char_slice(..));
         if self.last_cursor_line.get() == cursor_line && self.last_doc.get() == doc.id() {
             let active_generation = self.active_generation.load(atomic::Ordering::Relaxed);
             self.generation.get() == active_generation

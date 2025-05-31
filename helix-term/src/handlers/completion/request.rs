@@ -11,6 +11,7 @@ use helix_lsp::lsp;
 use helix_lsp::lsp::{CompletionContext, CompletionTriggerKind};
 use helix_lsp::util::pos_to_lsp_pos;
 use helix_stdx::rope::RopeSliceExt;
+use helix_stdx::rope::ropey1_shims::*;
 use helix_view::document::{Mode, SavePoint};
 use helix_view::handlers::completion::{CompletionEvent, ResponseContext};
 use helix_view::{Document, DocumentId, Editor, ViewId};
@@ -175,7 +176,7 @@ fn request_completions(
     }
 
     let text = doc.text();
-    let cursor = doc.selection(view.id).primary().cursor(text.slice(..));
+    let cursor = doc.selection(view.id).primary().cursor(text.char_slice(..));
     if trigger.view != view.id || trigger.doc != doc.id() || cursor < trigger.pos {
         return;
     }
@@ -190,7 +191,7 @@ fn request_completions(
     let doc = doc_mut!(editor, &doc.id());
     let savepoint = doc.savepoint(view);
     let text = doc.text();
-    let trigger_text = text.slice(..cursor);
+    let trigger_text = text.char_slice(..cursor);
 
     let mut seen_language_servers = HashSet::new();
     let language_servers: Vec<_> = doc
@@ -293,7 +294,7 @@ fn request_completions_from_language_server(
     let provider = ls.id();
     let offset_encoding = ls.offset_encoding();
     let text = doc.text();
-    let cursor = doc.selection(view).primary().cursor(text.slice(..));
+    let cursor = doc.selection(view).primary().cursor(text.char_slice(..));
     let pos = pos_to_lsp_pos(text, cursor, offset_encoding);
     let doc_id = doc.identifier();
 

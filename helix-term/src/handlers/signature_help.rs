@@ -5,6 +5,7 @@ use helix_core::syntax::config::LanguageServerFeature;
 use helix_event::{cancelable_future, register_hook, send_blocking, TaskController, TaskHandle};
 use helix_lsp::lsp::{self, SignatureInformation};
 use helix_stdx::rope::RopeSliceExt;
+use helix_stdx::rope::ropey1_shims::*;
 use helix_view::document::Mode;
 use helix_view::events::{DocumentDidChange, SelectionDidChange};
 use helix_view::handlers::lsp::{SignatureHelpEvent, SignatureHelpInvoked};
@@ -316,9 +317,9 @@ fn signature_help_post_insert_char_hook(
         ..
     } = capabilities
     {
-        let mut text = doc.text().slice(..);
+        let mut text = doc.text().char_slice(..);
         let cursor = doc.selection(view.id).primary().cursor(text);
-        text = text.slice(..cursor);
+        text = text.char_slice(..cursor);
         if triggers.iter().any(|trigger| text.ends_with(trigger)) {
             send_blocking(tx, SignatureHelpEvent::Trigger)
         }

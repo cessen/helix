@@ -147,7 +147,7 @@ pub fn line_numbers<'doc>(
     theme: &Theme,
     is_focused: bool,
 ) -> GutterFn<'doc> {
-    let text = doc.text().slice(..);
+    let text = doc.text().char_slice(..);
     let width = line_numbers_width(view, doc);
 
     let last_line_in_view = view.estimate_last_doc_line(doc);

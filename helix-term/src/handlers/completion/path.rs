@@ -26,10 +26,10 @@ pub(crate) fn path_completion(
     }
 
     let text = doc.text().clone();
-    let cursor = selection.primary().cursor(text.slice(..));
+    let cursor = selection.primary().cursor(text.char_slice(..));
     let cur_line = text.char_to_line(cursor);
     let start = text.line_to_char(cur_line).max(cursor.saturating_sub(1000));
-    let line_until_cursor = text.slice(start..cursor);
+    let line_until_cursor = text.char_slice(start..cursor);
 
     let (dir_path, typed_file_name) =
         get_path_suffix(line_until_cursor, false).and_then(|matched_path| {
@@ -106,7 +106,7 @@ pub(crate) fn path_completion(
                 let documentation = path_documentation(&md, &dir_path.join(&file_name), kind);
 
                 let transaction = Transaction::change_by_selection(&text, &selection, |range| {
-                    let cursor = range.cursor(text.slice(..));
+                    let cursor = range.cursor(text.char_slice(..));
                     (cursor - edit_diff, cursor, Some((&file_name).into()))
                 });
 

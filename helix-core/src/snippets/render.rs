@@ -150,9 +150,9 @@ impl Snippet {
             |replacement_start, replacement_end| {
                 let line_idx = doc.char_to_line(replacement_start);
                 let line_start = doc.line_to_char(line_idx);
-                let prefix = doc.slice(line_start..replacement_start);
+                let prefix = doc.char_slice(line_start..replacement_start);
                 let indent_len = prefix.chars().take_while(|c| c.is_whitespace()).count();
-                let indent = prefix.slice(..indent_len);
+                let indent = prefix.char_slice(..indent_len);
                 let at_newline = indent_len == replacement_start - line_start;
 
                 let (replacement, replacement_len) = self.render_at(

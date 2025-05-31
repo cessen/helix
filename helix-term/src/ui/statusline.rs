@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use helix_core::{coords_at_pos, encoding, Position};
 use helix_lsp::lsp::DiagnosticSeverity;
-use helix_stdx::rope::LINE_TYPE;
+use helix_stdx::rope::{ropey1_shims::*, LINE_TYPE};
 use helix_view::document::DEFAULT_LANGUAGE_NAME;
 use helix_view::{
     document::{Mode, SCRATCH_BUFFER_NAME},
@@ -358,12 +358,12 @@ where
 
 fn get_position(context: &RenderContext) -> Position {
     coords_at_pos(
-        context.doc.text().slice(..),
+        context.doc.text().char_slice(..),
         context
             .doc
             .selection(context.view.id)
             .primary()
-            .cursor(context.doc.text().slice(..)),
+            .cursor(context.doc.text().char_slice(..)),
     )
 }
 

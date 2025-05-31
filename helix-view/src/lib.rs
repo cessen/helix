@@ -21,6 +21,8 @@ pub mod view;
 
 use std::num::NonZeroUsize;
 
+use helix_stdx::rope::ropey1_shims::*;
+
 // uses NonZeroUsize so Option<DocumentId> use a byte rather than two
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct DocumentId(NonZeroUsize);
@@ -49,7 +51,7 @@ pub enum Align {
 }
 
 pub fn align_view(doc: &mut Document, view: &View, align: Align) {
-    let doc_text = doc.text().slice(..);
+    let doc_text = doc.text().char_slice(..);
     let cursor = doc.selection(view.id).primary().cursor(doc_text);
     let viewport = view.inner_area(doc);
     let last_line_height = viewport.height.saturating_sub(1);

@@ -145,7 +145,7 @@ pub fn auto_detect_line_ending(doc: &Rope) -> Option<LineEnding> {
 pub fn get_line_ending(line: &RopeSlice) -> Option<LineEnding> {
     // Last character as str.
     let g1 = line
-        .slice(line.len_chars().saturating_sub(1)..)
+        .char_slice(line.len_chars().saturating_sub(1)..)
         .as_str()
         .unwrap();
 
@@ -153,7 +153,7 @@ pub fn get_line_ending(line: &RopeSlice) -> Option<LineEnding> {
     // It's fine to punt on the non-contiguous case, because Ropey guarantees
     // that CRLF is always contiguous.
     let g2 = line
-        .slice(line.len_chars().saturating_sub(2)..)
+        .char_slice(line.len_chars().saturating_sub(2)..)
         .as_str()
         .unwrap_or("");
 
@@ -216,7 +216,7 @@ pub fn line_end_byte_index(slice: &RopeSlice, line: usize) -> usize {
 pub fn line_without_line_ending<'a>(slice: &'a RopeSlice, line_idx: usize) -> RopeSlice<'a> {
     let start = slice.line_to_char(line_idx);
     let end = line_end_char_index(slice, line_idx);
-    slice.slice(start..end)
+    slice.char_slice(start..end)
 }
 
 /// Returns the char index of the end of the given RopeSlice, not including
@@ -276,28 +276,28 @@ mod line_ending_tests {
         let r = Rope::from_str("hello\r\n");
         #[cfg(feature = "unicode-lines")]
         assert_eq!(
-            LineEnding::from_rope_slice(&r.slice(5..6)),
+            LineEnding::from_rope_slice(&r.char_slice(5..6)),
             Some(LineEnding::CR)
         );
         assert_eq!(
-            LineEnding::from_rope_slice(&r.slice(6..7)),
+            LineEnding::from_rope_slice(&r.char_slice(6..7)),
             Some(LineEnding::LF)
         );
         assert_eq!(
-            LineEnding::from_rope_slice(&r.slice(5..7)),
+            LineEnding::from_rope_slice(&r.char_slice(5..7)),
             Some(LineEnding::Crlf)
         );
-        assert_eq!(LineEnding::from_rope_slice(&r.slice(..)), None);
+        assert_eq!(LineEnding::from_rope_slice(&r.char_slice(..)), None);
     }
 
     #[test]
     fn get_line_ending_rope_slice() {
         let r = Rope::from_str("Hello\rworld\nhow\r\nare you?");
         #[cfg(feature = "unicode-lines")]
-        assert_eq!(get_line_ending(&r.slice(..6)), Some(LineEnding::CR));
-        assert_eq!(get_line_ending(&r.slice(..12)), Some(LineEnding::LF));
-        assert_eq!(get_line_ending(&r.slice(..17)), Some(LineEnding::Crlf));
-        assert_eq!(get_line_ending(&r.slice(..)), None);
+        assert_eq!(get_line_ending(&r.char_slice(..6)), Some(LineEnding::CR));
+        assert_eq!(get_line_ending(&r.char_slice(..12)), Some(LineEnding::LF));
+        assert_eq!(get_line_ending(&r.char_slice(..17)), Some(LineEnding::Crlf));
+        assert_eq!(get_line_ending(&r.char_slice(..)), None);
     }
 
     #[test]
@@ -313,7 +313,7 @@ mod line_ending_tests {
     #[test]
     fn line_end_char_index_rope_slice() {
         let r = Rope::from_str("Hello\rworld\nhow\r\nare you?");
-        let s = &r.slice(..);
+        let s = &r.char_slice(..);
         #[cfg(not(feature = "unicode-lines"))]
         {
             assert_eq!(line_end_char_index(s, 0), 11);

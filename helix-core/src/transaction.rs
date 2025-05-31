@@ -1,6 +1,8 @@
 use ropey::RopeSlice;
 use smallvec::SmallVec;
 
+use helix_stdx::rope::ropey1_shims::*;
+
 use crate::{chars::char_is_word, Range, Rope, Selection, Tendril};
 use std::{borrow::Cow, iter::once};
 
@@ -314,7 +316,7 @@ impl ChangeSet {
                     pos += n;
                 }
                 Delete(n) => {
-                    let text = Cow::from(original_doc.slice(pos..pos + *n));
+                    let text = Cow::from(original_doc.char_slice(pos..pos + *n));
                     changes.insert(Tendril::from(text.as_ref()));
                     pos += n;
                 }
@@ -527,7 +529,7 @@ impl Transaction {
     /// Create a new, empty transaction.
     pub fn new(doc: &Rope) -> Self {
         Self {
-            changes: ChangeSet::new(doc.slice(..)),
+            changes: ChangeSet::new(doc.char_slice(..)),
             selection: None,
         }
     }
@@ -1030,9 +1032,9 @@ mod test {
     #[test]
     fn combine_with_empty() {
         let empty = Rope::from("");
-        let a = ChangeSet::new(empty.slice(..));
+        let a = ChangeSet::new(empty.char_slice(..));
 
-        let mut b = ChangeSet::new(empty.slice(..));
+        let mut b = ChangeSet::new(empty.char_slice(..));
         b.insert("a".into());
 
         let changes = a.compose(b);
@@ -1046,9 +1048,9 @@ mod test {
         const TEST_CASE: &str = "Hello, これはヘリックスエディターです！";
 
         let empty = Rope::from("");
-        let a = ChangeSet::new(empty.slice(..));
+        let a = ChangeSet::new(empty.char_slice(..));
 
-        let mut b = ChangeSet::new(empty.slice(..));
+        let mut b = ChangeSet::new(empty.char_slice(..));
         b.insert(TEST_CASE.into());
 
         let changes = a.compose(b);

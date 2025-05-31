@@ -2205,7 +2205,7 @@ impl Editor {
 
         // if leaving append mode, move cursor back by 1
         if doc.restore_cursor {
-            let text = doc.text().slice(..);
+            let text = doc.text().char_slice(..);
             let selection = doc.selection(view.id).clone().transform(|range| {
                 let mut head = range.to();
                 if range.head > range.anchor {
@@ -2284,7 +2284,7 @@ fn try_restore_indent(doc: &mut Document, view: &mut View) {
     }
 
     let doc_changes = doc.changes().changes();
-    let text = doc.text().slice(..);
+    let text = doc.text().char_slice(..);
     let range = doc.selection(view.id).primary();
     let pos = range.cursor(text);
     let line_end_pos = line_end_char_index(&text, range.cursor_line(text));
@@ -2309,7 +2309,7 @@ impl CursorCache {
             return pos;
         }
 
-        let text = doc.text().slice(..);
+        let text = doc.text().char_slice(..);
         let cursor = doc.selection(view.id).primary().cursor(text);
         let res = view.screen_coords_at_pos(doc, text, cursor);
         self.set(res);

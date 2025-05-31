@@ -119,7 +119,7 @@ pub async fn test_key_sequences(
 
     for (i, (in_keys, test_fn)) in inputs.into_iter().enumerate() {
         let (view, doc) = current_ref!(app.editor);
-        let state = test::plain(doc.text().slice(..), doc.selection(view.id));
+        let state = test::plain(doc.text().char_slice(..), doc.selection(view.id));
 
         log::debug!("executing test with document state:\n\n-----\n\n{}", state);
 
@@ -135,7 +135,7 @@ pub async fn test_key_sequences(
 
         if !app_exited {
             let (view, doc) = current_ref!(app.editor);
-            let state = test::plain(doc.text().slice(..), doc.selection(view.id));
+            let state = test::plain(doc.text().char_slice(..), doc.selection(view.id));
 
             log::debug!(
                 "finished running test with document state:\n\n-----\n\n{}",
