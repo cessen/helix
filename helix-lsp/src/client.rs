@@ -878,7 +878,11 @@ impl Client {
                 }
                 Delete(_) => {
                     let start = pos_to_lsp_pos(new_text, new_pos, offset_encoding);
-                    let end = traverse(start, old_text.char_slice(old_pos..old_end), offset_encoding);
+                    let end = traverse(
+                        start,
+                        old_text.char_slice(old_pos..old_end),
+                        offset_encoding,
+                    );
 
                     // deletion
                     changes.push(lsp::TextDocumentContentChangeEvent {
@@ -895,8 +899,11 @@ impl Client {
                     // a subsequent delete means a replace, consume it
                     let end = if let Some(Delete(len)) = iter.peek() {
                         old_end = old_pos + len;
-                        let end =
-                            traverse(start, old_text.char_slice(old_pos..old_end), offset_encoding);
+                        let end = traverse(
+                            start,
+                            old_text.char_slice(old_pos..old_end),
+                            offset_encoding,
+                        );
 
                         iter.next();
 

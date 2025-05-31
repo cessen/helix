@@ -7,7 +7,7 @@ use futures_util::FutureExt;
 use helix_event::status;
 use helix_stdx::{
     path::{self, find_paths},
-    rope::{self, RopeSliceExt, ropey1_shims::*, LINE_TYPE},
+    rope::{self, ropey1_shims::*, RopeSliceExt, LINE_TYPE},
 };
 use helix_vcs::{FileChange, Hunk};
 pub use lsp::*;
@@ -3286,7 +3286,10 @@ fn jumplist_picker(cx: &mut Context) {
     )
     .with_preview(|editor, meta| {
         let doc = &editor.documents.get(&meta.id)?;
-        let line = meta.selection.primary().cursor_line(doc.text().char_slice(..));
+        let line = meta
+            .selection
+            .primary()
+            .cursor_line(doc.text().char_slice(..));
         Some((meta.id.into(), Some((line, line))))
     });
     cx.push_layer(Box::new(overlaid(picker)));
@@ -3789,7 +3792,11 @@ fn goto_line_without_jumplist(
     if let Some(count) = count {
         let (view, doc) = current!(editor);
         let text = doc.text().char_slice(..);
-        let max_line = if text.line(text.len_lines(LINE_TYPE) - 1, LINE_TYPE).len_chars() == 0 {
+        let max_line = if text
+            .line(text.len_lines(LINE_TYPE) - 1, LINE_TYPE)
+            .len_chars()
+            == 0
+        {
             // If the last line is blank, don't jump to it.
             text.len_lines(LINE_TYPE).saturating_sub(2)
         } else {
@@ -3817,7 +3824,11 @@ fn extend_to_last_line(cx: &mut Context) {
 fn goto_last_line_impl(cx: &mut Context, movement: Movement) {
     let (view, doc) = current!(cx.editor);
     let text = doc.text().char_slice(..);
-    let line_idx = if text.line(text.len_lines(LINE_TYPE) - 1, LINE_TYPE).len_chars() == 0 {
+    let line_idx = if text
+        .line(text.len_lines(LINE_TYPE) - 1, LINE_TYPE)
+        .len_chars()
+        == 0
+    {
         // If the last line is blank, don't jump to it.
         text.len_lines(LINE_TYPE).saturating_sub(2)
     } else {
@@ -4178,7 +4189,9 @@ pub mod insert {
         let indent = Tendril::from(doc.indent_style.as_str());
         let transaction = Transaction::insert(
             doc.text(),
-            &doc.selection(view.id).clone().cursors(doc.text().char_slice(..)),
+            &doc.selection(view.id)
+                .clone()
+                .cursors(doc.text().char_slice(..)),
             indent,
         );
         doc.apply(&transaction, view.id);
@@ -4231,7 +4244,9 @@ pub mod insert {
                 let line = text.line(current_line, LINE_TYPE);
 
                 let indent = match line.first_non_whitespace_char() {
-                    Some(pos) if continue_comment_token.is_some() => line.char_slice(..pos).to_string(),
+                    Some(pos) if continue_comment_token.is_some() => {
+                        line.char_slice(..pos).to_string()
+                    }
                     _ => indent::indent_for_newline(
                         &loader,
                         doc.syntax(),
@@ -4858,7 +4873,11 @@ fn indent(cx: &mut Context) {
     let transaction = Transaction::change(
         doc.text(),
         lines.into_iter().filter_map(|line| {
-            let is_blank = doc.text().line(line, LINE_TYPE).chunks().all(|s| s.trim().is_empty());
+            let is_blank = doc
+                .text()
+                .line(line, LINE_TYPE)
+                .chunks()
+                .all(|s| s.trim().is_empty());
             if is_blank {
                 return None;
             }

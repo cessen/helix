@@ -15,7 +15,10 @@ use futures_util::stream::select_all::SelectAll;
 use helix_core::syntax::config::{
     LanguageConfiguration, LanguageServerConfiguration, LanguageServerFeatures,
 };
-use helix_stdx::{path, rope::{ropey1_shims::*, LINE_TYPE}};
+use helix_stdx::{
+    path,
+    rope::{ropey1_shims::*, LINE_TYPE},
+};
 use slotmap::SlotMap;
 use tokio::sync::mpsc::UnboundedReceiver;
 

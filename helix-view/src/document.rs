@@ -14,7 +14,10 @@ use helix_core::syntax::config::LanguageServerFeature;
 use helix_core::text_annotations::{InlineAnnotation, Overlay};
 use helix_event::TaskController;
 use helix_lsp::util::lsp_pos_to_pos;
-use helix_stdx::{faccess::{copy_metadata, readonly}, rope::ropey1_shims::*};
+use helix_stdx::{
+    faccess::{copy_metadata, readonly},
+    rope::ropey1_shims::*,
+};
 use helix_vcs::{DiffHandle, DiffProviderRegistry};
 use once_cell::sync::OnceCell;
 use thiserror;
@@ -1322,8 +1325,10 @@ impl Document {
     /// Select text within the [`Document`].
     pub fn set_selection(&mut self, view_id: ViewId, selection: Selection) {
         // TODO: use a transaction?
-        self.selections
-            .insert(view_id, selection.ensure_invariants(self.text().char_slice(..)));
+        self.selections.insert(
+            view_id,
+            selection.ensure_invariants(self.text().char_slice(..)),
+        );
         helix_event::dispatch(SelectionDidChange {
             doc: self,
             view: view_id,
@@ -1389,7 +1394,9 @@ impl Document {
             if let Some(selection) = transaction.selection() {
                 self.selections.insert(
                     view_id,
-                    selection.clone().ensure_invariants(self.text.char_slice(..)),
+                    selection
+                        .clone()
+                        .ensure_invariants(self.text.char_slice(..)),
                 );
                 helix_event::dispatch(SelectionDidChange {
                     doc: self,
@@ -1531,7 +1538,9 @@ impl Document {
         if let Some(selection) = transaction.selection() {
             self.selections.insert(
                 view_id,
-                selection.clone().ensure_invariants(self.text.char_slice(..)),
+                selection
+                    .clone()
+                    .ensure_invariants(self.text.char_slice(..)),
             );
             helix_event::dispatch(SelectionDidChange {
                 doc: self,
@@ -2014,7 +2023,9 @@ impl Document {
 
         helix_lsp::util::pos_to_lsp_pos(
             text,
-            self.selection(view_id).primary().cursor(text.char_slice(..)),
+            self.selection(view_id)
+                .primary()
+                .cursor(text.char_slice(..)),
             offset_encoding,
         )
     }
