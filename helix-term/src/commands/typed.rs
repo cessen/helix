@@ -11,6 +11,7 @@ use helix_core::fuzzy::fuzzy_match;
 use helix_core::indent::MAX_INDENT;
 use helix_core::line_ending;
 use helix_stdx::path::home_dir;
+use helix_stdx::rope::{ropey1_shims::*, LINE_TYPE};
 use helix_view::document::{read_to_string, DEFAULT_LANGUAGE_NAME};
 use helix_view::editor::{CloseError, ConfigEvent};
 use helix_view::expansion;
@@ -370,7 +371,7 @@ fn trim_trailing_whitespace(doc: &mut Document, view_id: ViewId) {
     let mut pos = 0;
     let transaction = Transaction::delete(
         text,
-        text.lines().filter_map(|line| {
+        text.lines(LINE_TYPE).filter_map(|line| {
             let line_end_len_chars = line_ending::get_line_ending(&line)
                 .map(|le| le.len_chars())
                 .unwrap_or_default();
@@ -591,7 +592,7 @@ fn set_line_ending(
     let mut pos = 0;
     let transaction = Transaction::change(
         doc.text(),
-        doc.text().lines().filter_map(|line| {
+        doc.text().lines(LINE_TYPE).filter_map(|line| {
             pos += line.len_chars();
             match helix_core::line_ending::get_line_ending(&line) {
                 Some(ending) if ending != line_ending => {
@@ -1686,7 +1687,7 @@ fn tree_sitter_highlight_name(
             // Calculate viewport byte ranges:
             let row = text.char_to_line(doc.view_offset(view.id).anchor.min(text.len_chars()));
             // Saturating subs to make it inclusive zero indexing.
-            let last_line = text.len_lines().saturating_sub(1);
+            let last_line = text.len_lines(LINE_TYPE).saturating_sub(1);
             let height = view.inner_area(doc).height;
             let last_visible_line = (row + height as usize).saturating_sub(1).min(last_line);
             let start = text.line_to_byte(row.min(last_line)) as u32;

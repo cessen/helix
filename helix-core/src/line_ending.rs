@@ -1,5 +1,7 @@
 use crate::{Rope, RopeSlice};
 
+use helix_stdx::rope::{ropey1_shims::*, LINE_TYPE};
+
 #[cfg(target_os = "windows")]
 pub const NATIVE_LINE_ENDING: LineEnding = LineEnding::Crlf;
 #[cfg(not(target_os = "windows"))]
@@ -128,7 +130,7 @@ pub fn rope_is_line_ending(r: RopeSlice) -> bool {
 pub fn auto_detect_line_ending(doc: &Rope) -> Option<LineEnding> {
     // Return first matched line ending. Not all possible line endings
     // are being matched, as they might be special-use only
-    for line in doc.lines().take(100) {
+    for line in doc.lines(LINE_TYPE).take(100) {
         match get_line_ending(&line) {
             None => {}
             #[cfg(feature = "unicode-lines")]
@@ -198,14 +200,14 @@ pub fn get_line_ending_of_str(line: &str) -> Option<LineEnding> {
 /// Returns the char index of the end of the given line, not including its line ending.
 pub fn line_end_char_index(slice: &RopeSlice, line: usize) -> usize {
     slice.line_to_char(line + 1)
-        - get_line_ending(&slice.line(line))
+        - get_line_ending(&slice.line(line, LINE_TYPE))
             .map(|le| le.len_chars())
             .unwrap_or(0)
 }
 
 pub fn line_end_byte_index(slice: &RopeSlice, line: usize) -> usize {
     slice.line_to_byte(line + 1)
-        - get_line_ending(&slice.line(line))
+        - get_line_ending(&slice.line(line, LINE_TYPE))
             .map(|le| le.as_str().len())
             .unwrap_or(0)
 }

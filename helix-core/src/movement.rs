@@ -2,6 +2,8 @@ use std::{borrow::Cow, cmp::Reverse, iter};
 
 use ropey::iter::Chars;
 
+use helix_stdx::rope::{ropey1_shims::*, LINE_TYPE};
+
 use crate::{
     char_idx_at_visual_offset,
     chars::{categorize_char, char_is_line_ending, CharCategory},
@@ -94,7 +96,12 @@ pub fn move_vertically_visual(
     }
 
     // Special-case to avoid moving to the end of the last non-empty line.
-    if behaviour == Movement::Extend && slice.line(slice.char_to_line(new_pos)).len_chars() == 0 {
+    if behaviour == Movement::Extend
+        && slice
+            .line(slice.char_to_line(new_pos), LINE_TYPE)
+            .len_chars()
+            == 0
+    {
         return range;
     }
 
@@ -131,17 +138,17 @@ pub fn move_vertically(
         Direction::Backward => line_idx.saturating_sub(count),
     };
 
-    let line = if new_line_idx >= slice.len_lines() - 1 {
+    let line = if new_line_idx >= slice.len_lines(LINE_TYPE) - 1 {
         // there is no line terminator for the last line
         // so the logic below is not necessary here
-        new_line_idx = slice.len_lines() - 1;
+        new_line_idx = slice.len_lines(LINE_TYPE) - 1;
         slice
     } else {
         // char_idx_at_visual_block_offset returns a one-past-the-end index
         // in case it reaches the end of the slice
         // to avoid moving to the nextline in that case the line terminator is removed from the line
         let new_line_end = prev_grapheme_boundary(slice, slice.line_to_char(new_line_idx + 1));
-        slice.slice(..new_line_end)
+        slice.char_slice(..new_line_end)
     };
 
     let new_line_start = line.line_to_char(new_line_idx);
@@ -156,7 +163,7 @@ pub fn move_vertically(
     );
 
     // Special-case to avoid moving to the end of the last non-empty line.
-    if behaviour == Movement::Extend && slice.line(new_line_idx).len_chars() == 0 {
+    if behaviour == Movement::Extend && slice.line(new_line_idx, LINE_TYPE).len_chars() == 0 {
         return range;
     }
 
@@ -252,7 +259,9 @@ fn word_move(slice: RopeSlice, range: Range, count: usize, target: WordMotionTar
     // Do the main work.
     let mut range = start_range;
     for _ in 0..count {
-        let next_range = slice.chars_at(range.head).range_to_target(target, range);
+        let next_range = slice
+            .chars_at_char(range.head)
+            .range_to_target(target, range);
         if range == next_range {
             break;
         }
@@ -269,15 +278,15 @@ pub fn move_prev_paragraph(
 ) -> Range {
     let mut line = range.cursor_line(slice);
     let first_char = slice.line_to_char(line) == range.cursor(slice);
-    let prev_line_empty = rope_is_line_ending(slice.line(line.saturating_sub(1)));
-    let curr_line_empty = rope_is_line_ending(slice.line(line));
+    let prev_line_empty = rope_is_line_ending(slice.line(line.saturating_sub(1), LINE_TYPE));
+    let curr_line_empty = rope_is_line_ending(slice.line(line, LINE_TYPE));
     let prev_empty_to_line = prev_line_empty && !curr_line_empty;
 
     // skip character before paragraph boundary
     if prev_empty_to_line && !first_char {
         line += 1;
     }
-    let mut lines = slice.lines_at(line);
+    let mut lines = slice.lines_at(line, LINE_TYPE);
     lines.reverse();
     let mut lines = lines.map(rope_is_line_ending).peekable();
     let mut last_line = line;
@@ -317,16 +326,21 @@ pub fn move_next_paragraph(
     let mut line = range.cursor_line(slice);
     let last_char =
         prev_grapheme_boundary(slice, slice.line_to_char(line + 1)) == range.cursor(slice);
-    let curr_line_empty = rope_is_line_ending(slice.line(line));
-    let next_line_empty =
-        rope_is_line_ending(slice.line(slice.len_lines().saturating_sub(1).min(line + 1)));
+    let curr_line_empty = rope_is_line_ending(slice.line(line, LINE_TYPE));
+    let next_line_empty = rope_is_line_ending(slice.line(
+        slice.len_lines(LINE_TYPE).saturating_sub(1).min(line + 1),
+        LINE_TYPE,
+    ));
     let curr_empty_to_line = curr_line_empty && !next_line_empty;
 
     // skip character after paragraph boundary
     if curr_empty_to_line && last_char {
         line += 1;
     }
-    let mut lines = slice.lines_at(line).map(rope_is_line_ending).peekable();
+    let mut lines = slice
+        .lines_at(line, LINE_TYPE)
+        .map(rope_is_line_ending)
+        .peekable();
     let mut last_line = line;
     for _ in 0..count {
         while lines.next_if(|&e| !e).is_some() {
@@ -364,7 +378,7 @@ pub fn skip_while<F>(slice: RopeSlice, pos: usize, fun: F) -> Option<usize>
 where
     F: Fn(char) -> bool,
 {
-    let mut chars = slice.chars_at(pos).enumerate();
+    let mut chars = slice.chars_at_char(pos).enumerate();
     chars.find_map(|(i, c)| if !fun(c) { Some(pos + i) } else { None })
 }
 
@@ -376,7 +390,7 @@ pub fn backwards_skip_while<F>(slice: RopeSlice, pos: usize, fun: F) -> Option<u
 where
     F: Fn(char) -> bool,
 {
-    let mut chars_starting_from_next = slice.chars_at(pos);
+    let mut chars_starting_from_next = slice.chars_at_char(pos);
     let mut backwards = iter::from_fn(|| chars_starting_from_next.prev()).enumerate();
     backwards.find_map(|(i, c)| {
         if !fun(c) {
@@ -718,7 +732,7 @@ mod test {
     #[test]
     fn test_vertical_move() {
         let text = Rope::from("abcd\nefg\nwrs");
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         let pos = pos_at_coords(slice, (0, 4).into(), true);
 
         let range = Range::new(pos, pos);
@@ -743,7 +757,7 @@ mod test {
     #[test]
     fn horizontal_moves_through_single_line_text() {
         let text = Rope::from(SINGLE_LINE_SAMPLE);
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         let position = pos_at_coords(slice, (0, 0).into(), true);
 
         let mut range = Range::point(position);
@@ -774,7 +788,7 @@ mod test {
     #[test]
     fn horizontal_moves_through_multiline_text() {
         let text = Rope::from(MULTILINE_SAMPLE);
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         let position = pos_at_coords(slice, (0, 0).into(), true);
 
         let mut range = Range::point(position);
@@ -809,7 +823,7 @@ mod test {
     #[test]
     fn selection_extending_moves_in_single_line_text() {
         let text = Rope::from(SINGLE_LINE_SAMPLE);
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         let position = pos_at_coords(slice, (0, 0).into(), true);
 
         let mut range = Range::point(position);
@@ -838,7 +852,7 @@ mod test {
     #[test]
     fn vertical_moves_in_single_column() {
         let text = Rope::from(MULTILINE_SAMPLE);
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         let position = pos_at_coords(slice, (0, 0).into(), true);
         let mut range = Range::point(position);
         let moves_and_expected_coordinates = [
@@ -871,7 +885,7 @@ mod test {
     #[test]
     fn vertical_moves_jumping_column() {
         let text = Rope::from(MULTILINE_SAMPLE);
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         let position = pos_at_coords(slice, (0, 0).into(), true);
         let mut range = Range::point(position);
 
@@ -923,7 +937,7 @@ mod test {
     #[test]
     fn multibyte_character_wide_column_jumps() {
         let text = Rope::from(MULTIBYTE_CHARACTER_SAMPLE);
-        let slice = text.slice(..);
+        let slice = text.char_slice(..);
         let position = pos_at_coords(slice, (0, 0).into(), true);
         let mut range = Range::point(position);
 
@@ -974,19 +988,31 @@ mod test {
     #[test]
     #[should_panic]
     fn nonsensical_ranges_panic_on_forward_movement_attempt_in_debug_mode() {
-        move_next_word_start(Rope::from("Sample").slice(..), Range::point(99999999), 1);
+        move_next_word_start(
+            Rope::from("Sample").char_slice(..),
+            Range::point(99999999),
+            1,
+        );
     }
 
     #[test]
     #[should_panic]
     fn nonsensical_ranges_panic_on_forward_to_end_movement_attempt_in_debug_mode() {
-        move_next_word_end(Rope::from("Sample").slice(..), Range::point(99999999), 1);
+        move_next_word_end(
+            Rope::from("Sample").char_slice(..),
+            Range::point(99999999),
+            1,
+        );
     }
 
     #[test]
     #[should_panic]
     fn nonsensical_ranges_panic_on_backwards_movement_attempt_in_debug_mode() {
-        move_prev_word_start(Rope::from("Sample").slice(..), Range::point(99999999), 1);
+        move_prev_word_start(
+            Rope::from("Sample").char_slice(..),
+            Range::point(99999999),
+            1,
+        );
     }
 
     #[test]
@@ -1069,7 +1095,7 @@ mod test {
 
         for (sample, scenario) in tests {
             for (count, begin, expected_end) in scenario.into_iter() {
-                let range = move_next_word_start(Rope::from(sample).slice(..), begin, count);
+                let range = move_next_word_start(Rope::from(sample).char_slice(..), begin, count);
                 assert_eq!(range, expected_end, "Case failed: [{}]", sample);
             }
         }
@@ -1155,7 +1181,8 @@ mod test {
 
         for (sample, scenario) in tests {
             for (count, begin, expected_end) in scenario.into_iter() {
-                let range = move_next_sub_word_start(Rope::from(sample).slice(..), begin, count);
+                let range =
+                    move_next_sub_word_start(Rope::from(sample).char_slice(..), begin, count);
                 assert_eq!(range, expected_end, "Case failed: [{}]", sample);
             }
         }
@@ -1241,7 +1268,7 @@ mod test {
 
         for (sample, scenario) in tests {
             for (count, begin, expected_end) in scenario.into_iter() {
-                let range = move_next_sub_word_end(Rope::from(sample).slice(..), begin, count);
+                let range = move_next_sub_word_end(Rope::from(sample).char_slice(..), begin, count);
                 assert_eq!(range, expected_end, "Case failed: [{}]", sample);
             }
         }
@@ -1325,7 +1352,8 @@ mod test {
 
         for (sample, scenario) in tests {
             for (count, begin, expected_end) in scenario.into_iter() {
-                let range = move_next_long_word_start(Rope::from(sample).slice(..), begin, count);
+                let range =
+                    move_next_long_word_start(Rope::from(sample).char_slice(..), begin, count);
                 assert_eq!(range, expected_end, "Case failed: [{}]", sample);
             }
         }
@@ -1410,7 +1438,7 @@ mod test {
 
         for (sample, scenario) in tests {
             for (count, begin, expected_end) in scenario.into_iter() {
-                let range = move_prev_word_start(Rope::from(sample).slice(..), begin, count);
+                let range = move_prev_word_start(Rope::from(sample).char_slice(..), begin, count);
                 assert_eq!(range, expected_end, "Case failed: [{}]", sample);
             }
         }
@@ -1496,7 +1524,8 @@ mod test {
 
         for (sample, scenario) in tests {
             for (count, begin, expected_end) in scenario.into_iter() {
-                let range = move_prev_sub_word_start(Rope::from(sample).slice(..), begin, count);
+                let range =
+                    move_prev_sub_word_start(Rope::from(sample).char_slice(..), begin, count);
                 assert_eq!(range, expected_end, "Case failed: [{}]", sample);
             }
         }
@@ -1593,7 +1622,8 @@ mod test {
 
         for (sample, scenario) in tests {
             for (count, begin, expected_end) in scenario.into_iter() {
-                let range = move_prev_long_word_start(Rope::from(sample).slice(..), begin, count);
+                let range =
+                    move_prev_long_word_start(Rope::from(sample).char_slice(..), begin, count);
                 assert_eq!(range, expected_end, "Case failed: [{}]", sample);
             }
         }
@@ -1677,7 +1707,7 @@ mod test {
 
         for (sample, scenario) in tests {
             for (count, begin, expected_end) in scenario.into_iter() {
-                let range = move_next_word_end(Rope::from(sample).slice(..), begin, count);
+                let range = move_next_word_end(Rope::from(sample).char_slice(..), begin, count);
                 assert_eq!(range, expected_end, "Case failed: [{}]", sample);
             }
         }
@@ -1759,7 +1789,7 @@ mod test {
 
         for (sample, scenario) in tests {
             for (count, begin, expected_end) in scenario.into_iter() {
-                let range = move_prev_word_end(Rope::from(sample).slice(..), begin, count);
+                let range = move_prev_word_end(Rope::from(sample).char_slice(..), begin, count);
                 assert_eq!(range, expected_end, "Case failed: [{}]", sample);
             }
         }
@@ -1845,7 +1875,7 @@ mod test {
 
         for (sample, scenario) in tests {
             for (count, begin, expected_end) in scenario.into_iter() {
-                let range = move_prev_sub_word_end(Rope::from(sample).slice(..), begin, count);
+                let range = move_prev_sub_word_end(Rope::from(sample).char_slice(..), begin, count);
                 assert_eq!(range, expected_end, "Case failed: [{}]", sample);
             }
         }
@@ -1927,7 +1957,8 @@ mod test {
 
         for (sample, scenario) in tests {
             for (count, begin, expected_end) in scenario.into_iter() {
-                let range = move_next_long_word_end(Rope::from(sample).slice(..), begin, count);
+                let range =
+                    move_next_long_word_end(Rope::from(sample).char_slice(..), begin, count);
                 assert_eq!(range, expected_end, "Case failed: [{}]", sample);
             }
         }
@@ -2021,7 +2052,8 @@ mod test {
 
         for (sample, scenario) in tests {
             for (count, begin, expected_end) in scenario.into_iter() {
-                let range = move_prev_long_word_end(Rope::from(sample).slice(..), begin, count);
+                let range =
+                    move_prev_long_word_end(Rope::from(sample).char_slice(..), begin, count);
                 assert_eq!(range, expected_end, "Case failed: [{}]", sample);
             }
         }
@@ -2054,8 +2086,8 @@ mod test {
         for (before, expected) in tests {
             let (s, selection) = crate::test::print(before);
             let text = Rope::from(s.as_str());
-            let selection =
-                selection.transform(|r| move_prev_paragraph(text.slice(..), r, 1, Movement::Move));
+            let selection = selection
+                .transform(|r| move_prev_paragraph(text.char_slice(..), r, 1, Movement::Move));
             let actual = crate::test::plain(s.as_ref(), &selection);
             assert_eq!(actual, expected, "\nbefore: `{:?}`", before);
         }
@@ -2077,8 +2109,8 @@ mod test {
         for (before, expected) in tests {
             let (s, selection) = crate::test::print(before);
             let text = Rope::from(s.as_str());
-            let selection =
-                selection.transform(|r| move_prev_paragraph(text.slice(..), r, 2, Movement::Move));
+            let selection = selection
+                .transform(|r| move_prev_paragraph(text.char_slice(..), r, 2, Movement::Move));
             let actual = crate::test::plain(s.as_ref(), &selection);
             assert_eq!(actual, expected, "\nbefore: `{:?}`", before);
         }
@@ -2101,7 +2133,7 @@ mod test {
             let (s, selection) = crate::test::print(before);
             let text = Rope::from(s.as_str());
             let selection = selection
-                .transform(|r| move_prev_paragraph(text.slice(..), r, 1, Movement::Extend));
+                .transform(|r| move_prev_paragraph(text.char_slice(..), r, 1, Movement::Extend));
             let actual = crate::test::plain(s.as_ref(), &selection);
             assert_eq!(actual, expected, "\nbefore: `{:?}`", before);
         }
@@ -2142,8 +2174,8 @@ mod test {
         for (before, expected) in tests {
             let (s, selection) = crate::test::print(before);
             let text = Rope::from(s.as_str());
-            let selection =
-                selection.transform(|r| move_next_paragraph(text.slice(..), r, 1, Movement::Move));
+            let selection = selection
+                .transform(|r| move_next_paragraph(text.char_slice(..), r, 1, Movement::Move));
             let actual = crate::test::plain(s.as_ref(), &selection);
             assert_eq!(actual, expected, "\nbefore: `{:?}`", before);
         }
@@ -2165,8 +2197,8 @@ mod test {
         for (before, expected) in tests {
             let (s, selection) = crate::test::print(before);
             let text = Rope::from(s.as_str());
-            let selection =
-                selection.transform(|r| move_next_paragraph(text.slice(..), r, 2, Movement::Move));
+            let selection = selection
+                .transform(|r| move_next_paragraph(text.char_slice(..), r, 2, Movement::Move));
             let actual = crate::test::plain(s.as_ref(), &selection);
             assert_eq!(actual, expected, "\nbefore: `{:?}`", before);
         }
@@ -2189,7 +2221,7 @@ mod test {
             let (s, selection) = crate::test::print(before);
             let text = Rope::from(s.as_str());
             let selection = selection
-                .transform(|r| move_next_paragraph(text.slice(..), r, 1, Movement::Extend));
+                .transform(|r| move_next_paragraph(text.char_slice(..), r, 1, Movement::Extend));
             let actual = crate::test::plain(s.as_ref(), &selection);
             assert_eq!(actual, expected, "\nbefore: `{:?}`", before);
         }

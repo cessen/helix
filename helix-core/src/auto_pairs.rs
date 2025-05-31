@@ -4,6 +4,8 @@
 use crate::{graphemes, movement::Direction, Range, Rope, Selection, Tendril, Transaction};
 use std::collections::HashMap;
 
+use helix_stdx::rope::ropey1_shims::*;
+
 use smallvec::SmallVec;
 
 // Heavily based on https://github.com/codemirror/closebrackets/

@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::ops::{Index, IndexMut};
 use std::sync::Arc;
 
-use helix_stdx::Range;
+use helix_stdx::{rope::ropey1_shims::*, Range};
 use ropey::{Rope, RopeSlice};
 use smallvec::SmallVec;
 

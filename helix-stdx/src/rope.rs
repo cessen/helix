@@ -3,20 +3,408 @@ use std::ops::{Bound, RangeBounds};
 
 pub use regex_cursor::engines::meta::{Builder as RegexBuilder, Regex};
 pub use regex_cursor::regex_automata::util::syntax::Config;
-use regex_cursor::{Input as RegexInput, RopeyCursor};
+use regex_cursor::Input as RegexInput;
 use ropey::iter::Chunks;
-use ropey::RopeSlice;
+use ropey::{ChunkCursor, RopeSlice};
 use unicode_segmentation::{GraphemeCursor, GraphemeIncomplete};
+
+pub const LINE_TYPE: ropey::LineType = ropey::LineType::LF;
+
+/// Shims for backwards compatibility with Ropey 1.x.
+///
+/// Over time we should phase the traits and methods in this out, and use the
+/// Ropey 2.x APIs directly.
+pub mod ropey1_shims {
+    use super::LINE_TYPE;
+
+    use std::ops::{Bound, RangeBounds};
+
+    use ropey::{
+        iter::{Bytes, Chars, Lines},
+        Rope, RopeSlice,
+    };
+
+    #[allow(non_camel_case_types)]
+    pub trait Ropey1Shim_General {
+        fn len_bytes(&self) -> usize;
+
+        fn byte_to_char(&self, byte_idx: usize) -> usize;
+        fn char_to_byte(&self, char_idx: usize) -> usize;
+        fn byte_to_line(&self, byte_idx: usize) -> usize;
+        fn line_to_byte(&self, line_idx: usize) -> usize;
+        fn char_to_line(&self, char_idx: usize) -> usize;
+        fn line_to_char(&self, line_idx: usize) -> usize;
+        fn char_to_utf16_cu(&self, char_idx: usize) -> usize;
+
+        fn try_byte_to_char(&self, byte_idx: usize) -> ropey::Result<usize>;
+        fn try_char_to_byte(&self, char_idx: usize) -> ropey::Result<usize>;
+        fn try_byte_to_line(&self, byte_idx: usize) -> ropey::Result<usize>;
+        fn try_line_to_byte(&self, line_idx: usize) -> ropey::Result<usize>;
+        fn try_char_to_line(&self, char_idx: usize) -> ropey::Result<usize>;
+        fn try_line_to_char(&self, line_idx: usize) -> ropey::Result<usize>;
+        fn try_utf16_cu_to_char(&self, char_idx: usize) -> ropey::Result<usize>;
+
+        /// Get char at char index.
+        fn get_char(&self, char_idx: usize) -> Option<char>;
+    }
+
+    impl<'a> Ropey1Shim_General for Rope {
+        fn len_bytes(&self) -> usize {
+            self.len()
+        }
+
+        fn byte_to_char(&self, byte_idx: usize) -> usize {
+            self.byte_to_char_idx(byte_idx)
+        }
+        fn char_to_byte(&self, char_idx: usize) -> usize {
+            self.char_to_byte_idx(char_idx)
+        }
+        fn byte_to_line(&self, byte_idx: usize) -> usize {
+            self.byte_to_line_idx(byte_idx, LINE_TYPE)
+        }
+        fn line_to_byte(&self, line_idx: usize) -> usize {
+            self.line_to_byte_idx(line_idx, LINE_TYPE)
+        }
+        fn char_to_line(&self, char_idx: usize) -> usize {
+            let byte_idx = self.char_to_byte_idx(char_idx);
+            self.byte_to_line_idx(byte_idx, LINE_TYPE)
+        }
+        fn line_to_char(&self, line_idx: usize) -> usize {
+            let byte_idx = self.line_to_byte_idx(line_idx, LINE_TYPE);
+            self.byte_to_char_idx(byte_idx)
+        }
+        fn char_to_utf16_cu(&self, char_idx: usize) -> usize {
+            let byte_idx = self.char_to_byte_idx(char_idx);
+            self.byte_to_utf16_idx(byte_idx)
+        }
+
+        fn try_byte_to_char(&self, byte_idx: usize) -> ropey::Result<usize> {
+            if byte_idx > self.len() {
+                return Err(ropey::Error::OutOfBounds);
+            }
+            Ok(self.byte_to_char(byte_idx))
+        }
+        fn try_char_to_byte(&self, char_idx: usize) -> ropey::Result<usize> {
+            if char_idx > self.len_chars() {
+                return Err(ropey::Error::OutOfBounds);
+            }
+            Ok(self.char_to_byte(char_idx))
+        }
+        fn try_byte_to_line(&self, byte_idx: usize) -> ropey::Result<usize> {
+            if byte_idx > self.len() {
+                return Err(ropey::Error::OutOfBounds);
+            }
+            Ok(self.byte_to_line(byte_idx))
+        }
+        fn try_line_to_byte(&self, line_idx: usize) -> ropey::Result<usize> {
+            if line_idx > self.len_lines(LINE_TYPE) {
+                return Err(ropey::Error::OutOfBounds);
+            }
+            Ok(self.line_to_byte(line_idx))
+        }
+        fn try_char_to_line(&self, char_idx: usize) -> ropey::Result<usize> {
+            if char_idx > self.len_chars() {
+                return Err(ropey::Error::OutOfBounds);
+            }
+            Ok(self.char_to_line(char_idx))
+        }
+        fn try_line_to_char(&self, line_idx: usize) -> ropey::Result<usize> {
+            if line_idx > self.len_lines(LINE_TYPE) {
+                return Err(ropey::Error::OutOfBounds);
+            }
+            Ok(self.line_to_char(line_idx))
+        }
+        fn try_utf16_cu_to_char(&self, utf16_idx: usize) -> ropey::Result<usize> {
+            if utf16_idx > self.len_utf16() {
+                return Err(ropey::Error::OutOfBounds);
+            }
+            let byte_idx = self.utf16_to_byte_idx(utf16_idx);
+            Ok(self.byte_to_char(byte_idx))
+        }
+
+        fn get_char(&self, char_idx: usize) -> Option<char> {
+            self.try_get_char(self.char_to_byte_idx(char_idx)).ok()
+        }
+    }
+
+    impl Ropey1Shim_General for RopeSlice<'_> {
+        fn len_bytes(&self) -> usize {
+            self.len()
+        }
+
+        fn byte_to_char(&self, byte_idx: usize) -> usize {
+            self.byte_to_char_idx(byte_idx)
+        }
+        fn char_to_byte(&self, char_idx: usize) -> usize {
+            self.char_to_byte_idx(char_idx)
+        }
+        fn byte_to_line(&self, byte_idx: usize) -> usize {
+            self.byte_to_line_idx(byte_idx, LINE_TYPE)
+        }
+        fn line_to_byte(&self, line_idx: usize) -> usize {
+            self.line_to_byte_idx(line_idx, LINE_TYPE)
+        }
+        fn char_to_line(&self, char_idx: usize) -> usize {
+            let byte_idx = self.char_to_byte_idx(char_idx);
+            self.byte_to_line_idx(byte_idx, LINE_TYPE)
+        }
+        fn line_to_char(&self, line_idx: usize) -> usize {
+            let byte_idx = self.line_to_byte_idx(line_idx, LINE_TYPE);
+            self.byte_to_char_idx(byte_idx)
+        }
+        fn char_to_utf16_cu(&self, char_idx: usize) -> usize {
+            let byte_idx = self.char_to_byte_idx(char_idx);
+            self.byte_to_utf16_idx(byte_idx)
+        }
+
+        fn try_byte_to_char(&self, byte_idx: usize) -> ropey::Result<usize> {
+            if byte_idx > self.len() {
+                return Err(ropey::Error::OutOfBounds);
+            }
+            Ok(self.byte_to_char(byte_idx))
+        }
+        fn try_char_to_byte(&self, char_idx: usize) -> ropey::Result<usize> {
+            if char_idx > self.len_chars() {
+                return Err(ropey::Error::OutOfBounds);
+            }
+            Ok(self.char_to_byte(char_idx))
+        }
+        fn try_byte_to_line(&self, byte_idx: usize) -> ropey::Result<usize> {
+            if byte_idx > self.len() {
+                return Err(ropey::Error::OutOfBounds);
+            }
+            Ok(self.byte_to_line(byte_idx))
+        }
+        fn try_line_to_byte(&self, line_idx: usize) -> ropey::Result<usize> {
+            if line_idx > self.len_lines(LINE_TYPE) {
+                return Err(ropey::Error::OutOfBounds);
+            }
+            Ok(self.line_to_byte(line_idx))
+        }
+        fn try_char_to_line(&self, char_idx: usize) -> ropey::Result<usize> {
+            if char_idx > self.len_chars() {
+                return Err(ropey::Error::OutOfBounds);
+            }
+            Ok(self.char_to_line(char_idx))
+        }
+        fn try_line_to_char(&self, line_idx: usize) -> ropey::Result<usize> {
+            if line_idx > self.len_lines(LINE_TYPE) {
+                return Err(ropey::Error::OutOfBounds);
+            }
+            Ok(self.line_to_char(line_idx))
+        }
+        fn try_utf16_cu_to_char(&self, utf16_idx: usize) -> ropey::Result<usize> {
+            if utf16_idx > self.len_utf16() {
+                return Err(ropey::Error::OutOfBounds);
+            }
+            let byte_idx = self.utf16_to_byte_idx(utf16_idx);
+            Ok(self.byte_to_char(byte_idx))
+        }
+
+        fn get_char(&self, char_idx: usize) -> Option<char> {
+            self.try_get_char(self.char_to_byte_idx(char_idx)).ok()
+        }
+    }
+
+    #[allow(non_camel_case_types)]
+    pub trait Ropey1Shim_Rope {
+        fn byte_slice<R>(&self, byte_range: R) -> RopeSlice<'_>
+        where
+            R: RangeBounds<usize>;
+        fn char_slice<R>(&self, byte_range: R) -> RopeSlice<'_>
+        where
+            R: RangeBounds<usize>;
+
+        fn chunk_at_byte(&self, byte_idx: usize) -> (&str, usize, usize, usize);
+
+        fn chars_at_char(&self, char_idx: usize) -> Chars<'_>;
+
+        fn get_bytes_at(&self, byte_idx: usize) -> Option<Bytes<'_>>;
+        fn get_chars_at_char(&self, char_idx: usize) -> Option<Chars<'_>>;
+        fn get_lines_at(&self, line_idx: usize) -> Option<Lines<'_>>;
+    }
+
+    #[allow(non_camel_case_types)]
+    pub trait Ropey1Shim_RopeSlice<'a> {
+        fn byte_slice<R>(&self, byte_range: R) -> RopeSlice<'a>
+        where
+            R: RangeBounds<usize>;
+        fn char_slice<R>(&self, byte_range: R) -> RopeSlice<'a>
+        where
+            R: RangeBounds<usize>;
+
+        fn chunk_at_byte(&self, byte_idx: usize) -> (&'a str, usize, usize, usize);
+        fn chars_at_char(&self, char_idx: usize) -> Chars<'a>;
+
+        fn get_bytes_at(&self, char_idx: usize) -> Option<Bytes<'a>>;
+        fn get_chars_at_char(&self, char_idx: usize) -> Option<Chars<'a>>;
+        fn get_lines_at(&self, char_idx: usize) -> Option<Lines<'a>>;
+    }
+
+    impl Ropey1Shim_Rope for Rope {
+        fn byte_slice<R>(&self, byte_range: R) -> RopeSlice<'_>
+        where
+            R: RangeBounds<usize>,
+        {
+            // Slicing is already by bytes in Ropey 2.x.
+            self.slice(byte_range)
+        }
+        fn char_slice<R>(&self, char_range: R) -> RopeSlice<'_>
+        where
+            R: RangeBounds<usize>,
+        {
+            let start_char = match char_range.start_bound() {
+                Bound::Included(&i) => i,
+                Bound::Excluded(&i) => i + 1,
+                Bound::Unbounded => 0,
+            };
+            let end_char = match char_range.end_bound() {
+                Bound::Included(&i) => i - 1,
+                Bound::Excluded(&i) => i,
+                Bound::Unbounded => self.len_chars(),
+            };
+
+            let start_byte = self.byte_to_char_idx(start_char);
+            let end_byte = self.byte_to_char_idx(end_char);
+
+            self.slice(start_byte..end_byte)
+        }
+
+        fn chunk_at_byte(&self, byte_idx: usize) -> (&str, usize, usize, usize) {
+            let (chunk, byte_offset) = self.chunk(byte_idx);
+            let char_offset = self.byte_to_char_idx(byte_offset);
+            let line_offset = self.byte_to_line_idx(byte_offset, LINE_TYPE);
+
+            (chunk, byte_offset, char_offset, line_offset)
+        }
+
+        fn chars_at_char(&self, char_idx: usize) -> Chars<'_> {
+            let byte_idx = self.char_to_byte_idx(char_idx);
+            self.chars_at(byte_idx)
+        }
+
+        fn get_bytes_at(&self, byte_idx: usize) -> Option<Bytes<'_>> {
+            if byte_idx > self.len() {
+                return None;
+            }
+            Some(self.bytes_at(byte_idx))
+        }
+        fn get_chars_at_char(&self, char_idx: usize) -> Option<Chars<'_>> {
+            if char_idx > self.len_chars() {
+                return None;
+            }
+            Some(self.chars_at_char(char_idx))
+        }
+        fn get_lines_at(&self, line_idx: usize) -> Option<Lines<'_>> {
+            if line_idx > self.len_lines(LINE_TYPE) {
+                return None;
+            }
+            Some(self.lines_at(line_idx, LINE_TYPE))
+        }
+    }
+
+    impl<'a> Ropey1Shim_RopeSlice<'a> for RopeSlice<'a> {
+        fn byte_slice<R>(&self, byte_range: R) -> RopeSlice<'a>
+        where
+            R: RangeBounds<usize>,
+        {
+            // Slicing is already by bytes in Ropey 2.x.
+            self.slice(byte_range)
+        }
+        fn char_slice<R>(&self, char_range: R) -> RopeSlice<'a>
+        where
+            R: RangeBounds<usize>,
+        {
+            let start_char = match char_range.start_bound() {
+                Bound::Included(&i) => i,
+                Bound::Excluded(&i) => i + 1,
+                Bound::Unbounded => 0,
+            };
+            let end_char = match char_range.end_bound() {
+                Bound::Included(&i) => i - 1,
+                Bound::Excluded(&i) => i,
+                Bound::Unbounded => self.len_chars(),
+            };
+
+            let start_byte = self.byte_to_char_idx(start_char);
+            let end_byte = self.byte_to_char_idx(end_char);
+
+            self.slice(start_byte..end_byte)
+        }
+
+        fn chunk_at_byte(&self, byte_idx: usize) -> (&'a str, usize, usize, usize) {
+            let (chunk, byte_offset) = self.chunk(byte_idx);
+            let char_offset = self.byte_to_char_idx(byte_offset);
+            let line_offset = self.byte_to_line_idx(byte_offset, LINE_TYPE);
+
+            (chunk, byte_offset, char_offset, line_offset)
+        }
+
+        fn chars_at_char(&self, char_idx: usize) -> Chars<'a> {
+            let byte_idx = self.char_to_byte_idx(char_idx);
+            self.chars_at(byte_idx)
+        }
+
+        fn get_bytes_at(&self, byte_idx: usize) -> Option<Bytes<'a>> {
+            if byte_idx > self.len() {
+                return None;
+            }
+            Some(self.bytes_at(byte_idx))
+        }
+        fn get_chars_at_char(&self, char_idx: usize) -> Option<Chars<'a>> {
+            if char_idx > self.len_chars() {
+                return None;
+            }
+            Some(self.chars_at_char(char_idx))
+        }
+        fn get_lines_at(&self, line_idx: usize) -> Option<Lines<'a>> {
+            if line_idx > self.len_lines(LINE_TYPE) {
+                return None;
+            }
+            Some(self.lines_at(line_idx, LINE_TYPE))
+        }
+    }
+
+    #[allow(non_camel_case_types)]
+    pub trait Ropey1Shim_Iter<'a> {
+        /// In-place reverse.
+        fn reverse(&mut self);
+    }
+
+    impl<'a> Ropey1Shim_Iter<'a> for ropey::iter::Bytes<'a> {
+        fn reverse(&mut self) {
+            *self = self.clone().reversed();
+        }
+    }
+
+    impl<'a> Ropey1Shim_Iter<'a> for ropey::iter::Chars<'a> {
+        fn reverse(&mut self) {
+            *self = self.clone().reversed();
+        }
+    }
+
+    impl<'a> Ropey1Shim_Iter<'a> for ropey::iter::Lines<'a> {
+        fn reverse(&mut self) {
+            *self = self.clone().reversed();
+        }
+    }
+
+    impl<'a> Ropey1Shim_Iter<'a> for ropey::iter::Chunks<'a> {
+        fn reverse(&mut self) {
+            *self = self.clone().reversed();
+        }
+    }
+}
 
 pub trait RopeSliceExt<'a>: Sized {
     fn ends_with(self, text: &str) -> bool;
     fn starts_with(self, text: &str) -> bool;
-    fn regex_input(self) -> RegexInput<RopeyCursor<'a>>;
+    fn regex_input(self) -> RegexInput<ChunkCursor<'a>>;
     fn regex_input_at_bytes<R: RangeBounds<usize>>(
         self,
         byte_range: R,
-    ) -> RegexInput<RopeyCursor<'a>>;
-    fn regex_input_at<R: RangeBounds<usize>>(self, char_range: R) -> RegexInput<RopeyCursor<'a>>;
+    ) -> RegexInput<ChunkCursor<'a>>;
+    fn regex_input_at<R: RangeBounds<usize>>(self, char_range: R) -> RegexInput<ChunkCursor<'a>>;
     fn first_non_whitespace_char(self) -> Option<usize>;
     fn last_non_whitespace_char(self) -> Option<usize>;
     /// Finds the closest byte index not exceeding `byte_idx` which lies on a character boundary.
@@ -155,36 +543,36 @@ pub trait RopeSliceExt<'a>: Sized {
 
 impl<'a> RopeSliceExt<'a> for RopeSlice<'a> {
     fn ends_with(self, text: &str) -> bool {
-        let len = self.len_bytes();
+        let len = self.len();
         if len < text.len() {
             return false;
         }
-        self.get_byte_slice(len - text.len()..)
-            .is_some_and(|end| end == text)
+        self.try_slice(len - text.len()..)
+            .is_ok_and(|end| end == text)
     }
 
     fn starts_with(self, text: &str) -> bool {
-        let len = self.len_bytes();
+        let len = self.len();
         if len < text.len() {
             return false;
         }
-        self.get_byte_slice(..text.len())
-            .is_some_and(|start| start == text)
+        self.try_slice(..text.len())
+            .is_ok_and(|start| start == text)
     }
 
-    fn regex_input(self) -> RegexInput<RopeyCursor<'a>> {
-        RegexInput::new(self)
+    fn regex_input(self) -> RegexInput<ChunkCursor<'a>> {
+        RegexInput::new(self.chunk_cursor())
     }
 
-    fn regex_input_at<R: RangeBounds<usize>>(self, char_range: R) -> RegexInput<RopeyCursor<'a>> {
+    fn regex_input_at<R: RangeBounds<usize>>(self, char_range: R) -> RegexInput<ChunkCursor<'a>> {
         let start_bound = match char_range.start_bound() {
-            Bound::Included(&val) => Bound::Included(self.char_to_byte(val)),
-            Bound::Excluded(&val) => Bound::Excluded(self.char_to_byte(val)),
+            Bound::Included(&val) => Bound::Included(self.char_to_byte_idx(val)),
+            Bound::Excluded(&val) => Bound::Excluded(self.char_to_byte_idx(val)),
             Bound::Unbounded => Bound::Unbounded,
         };
         let end_bound = match char_range.end_bound() {
-            Bound::Included(&val) => Bound::Included(self.char_to_byte(val)),
-            Bound::Excluded(&val) => Bound::Excluded(self.char_to_byte(val)),
+            Bound::Included(&val) => Bound::Included(self.char_to_byte_idx(val)),
+            Bound::Excluded(&val) => Bound::Excluded(self.char_to_byte_idx(val)),
             Bound::Unbounded => Bound::Unbounded,
         };
         self.regex_input_at_bytes((start_bound, end_bound))
@@ -192,12 +580,12 @@ impl<'a> RopeSliceExt<'a> for RopeSlice<'a> {
     fn regex_input_at_bytes<R: RangeBounds<usize>>(
         self,
         byte_range: R,
-    ) -> RegexInput<RopeyCursor<'a>> {
+    ) -> RegexInput<ChunkCursor<'a>> {
         let input = match byte_range.start_bound() {
             Bound::Included(&pos) | Bound::Excluded(&pos) => {
-                RegexInput::new(RopeyCursor::at(self, pos))
+                RegexInput::new(self.chunk_cursor_at(pos))
             }
-            Bound::Unbounded => RegexInput::new(self),
+            Bound::Unbounded => RegexInput::new(self.chunk_cursor()),
         };
         input.range(byte_range)
     }
@@ -211,69 +599,40 @@ impl<'a> RopeSliceExt<'a> for RopeSlice<'a> {
             .map(|pos| self.len_chars() - pos - 1)
     }
 
-    // These three are adapted from std:
-
     fn floor_char_boundary(self, byte_idx: usize) -> usize {
-        if byte_idx >= self.len_bytes() {
-            self.len_bytes()
-        } else {
-            let offset = self
-                .bytes_at(byte_idx + 1)
-                .reversed()
-                .take(4)
-                .position(is_utf8_char_boundary)
-                // A char can only be four bytes long so we are guaranteed to find a boundary.
-                .unwrap();
-
-            byte_idx - offset
-        }
+        RopeSlice::floor_char_boundary(&self, byte_idx)
     }
 
     fn ceil_char_boundary(self, byte_idx: usize) -> usize {
-        if byte_idx > self.len_bytes() {
-            self.len_bytes()
-        } else {
-            let upper_bound = self.len_bytes().min(byte_idx + 4);
-            self.bytes_at(byte_idx)
-                .position(is_utf8_char_boundary)
-                .map_or(upper_bound, |pos| pos + byte_idx)
-        }
+        RopeSlice::ceil_char_boundary(&self, byte_idx)
     }
 
     fn is_char_boundary(self, byte_idx: usize) -> bool {
-        if byte_idx == 0 {
-            return true;
-        }
-
-        if byte_idx >= self.len_bytes() {
-            byte_idx == self.len_bytes()
-        } else {
-            is_utf8_char_boundary(self.bytes_at(byte_idx).next().unwrap())
-        }
+        RopeSlice::is_char_boundary(&self, byte_idx)
     }
 
     fn floor_grapheme_boundary(self, mut byte_idx: usize) -> usize {
-        if byte_idx >= self.len_bytes() {
-            return self.len_bytes();
+        if byte_idx >= self.len() {
+            return self.len();
         }
 
         byte_idx = self.ceil_char_boundary(byte_idx + 1);
 
-        let (mut chunk, mut chunk_byte_idx, _, _) = self.chunk_at_byte(byte_idx);
+        let (mut chunk, mut chunk_byte_idx) = self.chunk(byte_idx);
 
-        let mut cursor = GraphemeCursor::new(byte_idx, self.len_bytes(), true);
+        let mut cursor = GraphemeCursor::new(byte_idx, self.len(), true);
 
         loop {
             match cursor.prev_boundary(chunk, chunk_byte_idx) {
                 Ok(None) => return 0,
                 Ok(Some(boundary)) => return boundary,
                 Err(GraphemeIncomplete::PrevChunk) => {
-                    let (ch, ch_byte_idx, _, _) = self.chunk_at_byte(chunk_byte_idx - 1);
+                    let (ch, ch_byte_idx) = self.chunk(chunk_byte_idx - 1);
                     chunk = ch;
                     chunk_byte_idx = ch_byte_idx;
                 }
                 Err(GraphemeIncomplete::PreContext(n)) => {
-                    let ctx_chunk = self.chunk_at_byte(n - 1).0;
+                    let ctx_chunk = self.chunk(n - 1).0;
                     cursor.provide_context(ctx_chunk, n - ctx_chunk.len());
                 }
                 _ => unreachable!(),
@@ -282,8 +641,8 @@ impl<'a> RopeSliceExt<'a> for RopeSlice<'a> {
     }
 
     fn ceil_grapheme_boundary(self, mut byte_idx: usize) -> usize {
-        if byte_idx >= self.len_bytes() {
-            return self.len_bytes();
+        if byte_idx >= self.len() {
+            return self.len();
         }
 
         if byte_idx == 0 {
@@ -292,20 +651,20 @@ impl<'a> RopeSliceExt<'a> for RopeSlice<'a> {
 
         byte_idx = self.floor_char_boundary(byte_idx - 1);
 
-        let (mut chunk, mut chunk_byte_idx, _, _) = self.chunk_at_byte(byte_idx);
+        let (mut chunk, mut chunk_byte_idx) = self.chunk(byte_idx);
 
-        let mut cursor = GraphemeCursor::new(byte_idx, self.len_bytes(), true);
+        let mut cursor = GraphemeCursor::new(byte_idx, self.len(), true);
 
         loop {
             match cursor.next_boundary(chunk, chunk_byte_idx) {
-                Ok(None) => return self.len_bytes(),
+                Ok(None) => return self.len(),
                 Ok(Some(boundary)) => return boundary,
                 Err(GraphemeIncomplete::NextChunk) => {
                     chunk_byte_idx += chunk.len();
-                    chunk = self.chunk_at_byte(chunk_byte_idx).0;
+                    chunk = self.chunk(chunk_byte_idx).0;
                 }
                 Err(GraphemeIncomplete::PreContext(n)) => {
-                    let ctx_chunk = self.chunk_at_byte(n - 1).0;
+                    let ctx_chunk = self.chunk(n - 1).0;
                     cursor.provide_context(ctx_chunk, n - ctx_chunk.len());
                 }
                 _ => unreachable!(),
@@ -319,15 +678,15 @@ impl<'a> RopeSliceExt<'a> for RopeSlice<'a> {
             return false;
         }
 
-        let (chunk, chunk_byte_idx, _, _) = self.chunk_at_byte(byte_idx);
+        let (chunk, chunk_byte_idx) = self.chunk(byte_idx);
 
-        let mut cursor = GraphemeCursor::new(byte_idx, self.len_bytes(), true);
+        let mut cursor = GraphemeCursor::new(byte_idx, self.len(), true);
 
         loop {
             match cursor.is_boundary(chunk, chunk_byte_idx) {
                 Ok(n) => return n,
                 Err(GraphemeIncomplete::PreContext(n)) => {
-                    let (ctx_chunk, ctx_byte_start, _, _) = self.chunk_at_byte(n - 1);
+                    let (ctx_chunk, ctx_byte_start) = self.chunk(n - 1);
                     cursor.provide_context(ctx_chunk, ctx_byte_start);
                 }
                 Err(_) => unreachable!(),
@@ -343,13 +702,13 @@ impl<'a> RopeSliceExt<'a> for RopeSlice<'a> {
             chunks,
             cur_chunk: first_chunk,
             cur_chunk_start: 0,
-            cursor: GraphemeCursor::new(0, self.len_bytes(), true),
+            cursor: GraphemeCursor::new(0, self.len(), true),
         }
     }
 
     fn graphemes_rev(self) -> RevRopeGraphemes<'a> {
-        let (mut chunks, mut cur_chunk_start, _, _) = self.chunks_at_byte(self.len_bytes());
-        chunks.reverse();
+        let (mut chunks, mut cur_chunk_start) = self.chunks_at(self.len());
+        chunks = chunks.reversed();
         let first_chunk = chunks.next().unwrap_or("");
         cur_chunk_start -= first_chunk.len();
         RevRopeGraphemes {
@@ -357,16 +716,9 @@ impl<'a> RopeSliceExt<'a> for RopeSlice<'a> {
             chunks,
             cur_chunk: first_chunk,
             cur_chunk_start,
-            cursor: GraphemeCursor::new(self.len_bytes(), self.len_bytes(), true),
+            cursor: GraphemeCursor::new(self.len(), self.len(), true),
         }
     }
-}
-
-// copied from std
-#[inline]
-const fn is_utf8_char_boundary(b: u8) -> bool {
-    // This is bit magic equivalent to: b < 128 || b >= 192
-    (b as i8) >= -0x40
 }
 
 /// An iterator over the graphemes of a `RopeSlice`.
@@ -414,20 +766,21 @@ impl<'a> Iterator for RopeGraphemes<'a> {
                     self.cur_chunk = self.chunks.next().unwrap_or("");
                 }
                 Err(GraphemeIncomplete::PreContext(idx)) => {
-                    let (chunk, byte_idx, _, _) = self.text.chunk_at_byte(idx.saturating_sub(1));
+                    let (chunk, byte_idx) = self.text.chunk(idx.saturating_sub(1));
                     self.cursor.provide_context(chunk, byte_idx);
                 }
                 _ => unreachable!(),
             }
         }
 
-        if a < self.cur_chunk_start {
-            Some(self.text.byte_slice(a..b))
-        } else {
-            let a2 = a - self.cur_chunk_start;
-            let b2 = b - self.cur_chunk_start;
-            Some((&self.cur_chunk[a2..b2]).into())
-        }
+        // if a < self.cur_chunk_start {
+        Some(self.text.slice(a..b))
+        // } else {
+        //     // TODO: get slice directly from chunk. Probably should add a method on ChunkCursor in Ropey2 for this.
+        //     let a2 = a - self.cur_chunk_start;
+        //     let b2 = b - self.cur_chunk_start;
+        //     Some((&self.cur_chunk[a2..b2]).into())
+        // }
     }
 }
 
@@ -476,20 +829,21 @@ impl<'a> Iterator for RevRopeGraphemes<'a> {
                     self.cur_chunk_start -= self.cur_chunk.len();
                 }
                 Err(GraphemeIncomplete::PreContext(idx)) => {
-                    let (chunk, byte_idx, _, _) = self.text.chunk_at_byte(idx.saturating_sub(1));
+                    let (chunk, byte_idx) = self.text.chunk(idx.saturating_sub(1));
                     self.cursor.provide_context(chunk, byte_idx);
                 }
                 _ => unreachable!(),
             }
         }
 
-        if a >= self.cur_chunk_start + self.cur_chunk.len() {
-            Some(self.text.byte_slice(b..a))
-        } else {
-            let a2 = a - self.cur_chunk_start;
-            let b2 = b - self.cur_chunk_start;
-            Some((&self.cur_chunk[b2..a2]).into())
-        }
+        // if a >= self.cur_chunk_start + self.cur_chunk.len() {
+        Some(self.text.slice(b..a))
+        // } else {
+        //     // TODO: get slice directly from chunk. Probably should add a method on ChunkCursor in Ropey2 for this.
+        //     let a2 = a - self.cur_chunk_start;
+        //     let b2 = b - self.cur_chunk_start;
+        //     Some((&self.cur_chunk[b2..a2]).into())
+        // }
     }
 }
 

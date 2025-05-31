@@ -2,6 +2,8 @@ use std::fmt::Display;
 
 use ropey::RopeSlice;
 
+use helix_stdx::rope::{ropey1_shims::*, LINE_TYPE};
+
 use crate::chars::{categorize_char, char_is_whitespace, CharCategory};
 use crate::graphemes::{next_grapheme_boundary, prev_grapheme_boundary};
 use crate::line_ending::rope_is_line_ending;
@@ -118,9 +120,9 @@ pub fn textobject_paragraph(
     count: usize,
 ) -> Range {
     let mut line = range.cursor_line(slice);
-    let prev_line_empty = rope_is_line_ending(slice.line(line.saturating_sub(1)));
-    let curr_line_empty = rope_is_line_ending(slice.line(line));
-    let next_line_empty = rope_is_line_ending(slice.line(line.saturating_sub(1)));
+    let prev_line_empty = rope_is_line_ending(slice.line(line.saturating_sub(1), LINE_TYPE));
+    let curr_line_empty = rope_is_line_ending(slice.line(line, LINE_TYPE));
+    let next_line_empty = rope_is_line_ending(slice.line(line.saturating_sub(1), LINE_TYPE));
     let last_char =
         prev_grapheme_boundary(slice, slice.line_to_char(line + 1)) == range.cursor(slice);
     let prev_empty_to_line = prev_line_empty && !curr_line_empty;
@@ -133,7 +135,7 @@ pub fn textobject_paragraph(
     }
     // do not include current paragraph on paragraph end (include next)
     if !(curr_empty_to_line && last_char) {
-        let mut lines = slice.lines_at(line_back);
+        let mut lines = slice.lines_at(line_back, LINE_TYPE);
         lines.reverse();
         let mut lines = lines.map(rope_is_line_ending).peekable();
         while lines.next_if(|&e| e).is_some() {
@@ -148,7 +150,10 @@ pub fn textobject_paragraph(
     if curr_empty_to_line && last_char {
         line += 1;
     }
-    let mut lines = slice.lines_at(line).map(rope_is_line_ending).peekable();
+    let mut lines = slice
+        .lines_at(line, LINE_TYPE)
+        .map(rope_is_line_ending)
+        .peekable();
     let mut count_done = 0; // count how many non-whitespace paragraphs done
     for _ in 0..count {
         let mut done = false;
@@ -166,7 +171,7 @@ pub fn textobject_paragraph(
     // makes `map` at the end of the paragraph with trailing newlines useful
     let last_paragraph = count_done != count && lines.peek().is_none();
     if last_paragraph {
-        let mut lines = slice.lines_at(line_back);
+        let mut lines = slice.lines_at(line_back, LINE_TYPE);
         lines.reverse();
         let mut lines = lines.map(rope_is_line_ending).peekable();
         while lines.next_if(|&e| e).is_some() {
@@ -182,7 +187,7 @@ pub fn textobject_paragraph(
         TextObject::Around => {}
         TextObject::Inside => {
             // remove last whitespace paragraph
-            let mut lines = slice.lines_at(line);
+            let mut lines = slice.lines_at(line, LINE_TYPE);
             lines.reverse();
             let mut lines = lines.map(rope_is_line_ending).peekable();
             while lines.next_if(|&e| e).is_some() {

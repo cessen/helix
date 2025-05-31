@@ -22,6 +22,7 @@ use helix_core::{
     unicode::width::UnicodeWidthStr,
     visual_offset_from_block, Change, Position, Range, Selection, Transaction,
 };
+use helix_stdx::rope::{ropey1_shims::*, LINE_TYPE};
 use helix_view::{
     annotations::diagnostics::DiagnosticFilter,
     document::{Mode, SCRATCH_BUFFER_NAME},
@@ -262,7 +263,7 @@ impl EditorView {
     ) -> std::ops::Range<usize> {
         // Calculate viewport byte ranges:
         // Saturating subs to make it inclusive zero indexing.
-        let last_line = text.len_lines().saturating_sub(1);
+        let last_line = text.len_lines(LINE_TYPE).saturating_sub(1);
         let last_visible_line = (row + height as usize).saturating_sub(1).min(last_line);
         let start = text.line_to_byte(row.min(last_line));
         let end = text.line_to_byte(last_visible_line + 1);

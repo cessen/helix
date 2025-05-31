@@ -4,6 +4,7 @@ use dap::requests::DisconnectArguments;
 use helix_core::Selection;
 use helix_dap::{self as dap, Client, ConnectionType, Payload, Request, ThreadId};
 use helix_lsp::block_on;
+use helix_stdx::rope::ropey1_shims::*;
 use log::warn;
 use serde_json::json;
 use std::fmt::Write;

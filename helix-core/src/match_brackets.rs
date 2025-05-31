@@ -1,5 +1,7 @@
 use std::iter;
 
+use helix_stdx::rope::ropey1_shims::*;
+
 use crate::tree_sitter::Node;
 use ropey::RopeSlice;
 

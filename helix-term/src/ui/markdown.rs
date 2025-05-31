@@ -13,6 +13,7 @@ use helix_core::{
     syntax::{self, HighlightEvent, OverlayHighlights},
     RopeSlice, Syntax,
 };
+use helix_stdx::rope::ropey1_shims::*;
 use helix_view::{
     graphics::{Margin, Rect, Style},
     theme::Modifier,

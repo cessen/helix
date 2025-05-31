@@ -3,7 +3,7 @@ use std::ops::Index;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
-use helix_stdx::rope::RopeSliceExt;
+use helix_stdx::rope::{ropey1_shims::*, RopeSliceExt};
 use helix_stdx::Range;
 use regex_cursor::engines::meta::Builder as RegexBuilder;
 use regex_cursor::engines::meta::Regex;

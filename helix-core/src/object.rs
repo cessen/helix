@@ -1,5 +1,7 @@
 use crate::{movement::Direction, syntax::TreeCursor, Range, RopeSlice, Selection, Syntax};
 
+use helix_stdx::rope::ropey1_shims::*;
+
 pub fn expand_selection(syntax: &Syntax, text: RopeSlice, selection: Selection) -> Selection {
     let cursor = &mut syntax.walk();
 

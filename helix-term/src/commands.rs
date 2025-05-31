@@ -7,7 +7,7 @@ use futures_util::FutureExt;
 use helix_event::status;
 use helix_stdx::{
     path::{self, find_paths},
-    rope::{self, RopeSliceExt},
+    rope::{self, RopeSliceExt, ropey1_shims::*, LINE_TYPE},
 };
 use helix_vcs::{FileChange, Hunk};
 pub use lsp::*;
@@ -939,7 +939,7 @@ fn kill_to_line_start(cx: &mut Context) {
             let head = if anchor == first_char && line != 0 {
                 // select until previous line
                 line_end_char_index(&text, line - 1)
-            } else if let Some(pos) = text.line(line).first_non_whitespace_char() {
+            } else if let Some(pos) = text.line(line, LINE_TYPE).first_non_whitespace_char() {
                 if first_char + pos < anchor {
                     // select until first non-blank in line if cursor is after it
                     first_char + pos
@@ -1001,7 +1001,7 @@ fn goto_first_nonwhitespace_impl(view: &mut View, doc: &mut Document, movement: 
     let selection = doc.selection(view.id).clone().transform(|range| {
         let line = range.cursor_line(text);
 
-        if let Some(pos) = text.line(line).first_non_whitespace_char() {
+        if let Some(pos) = text.line(line, LINE_TYPE).first_non_whitespace_char() {
             let pos = pos + text.line_to_char(line);
             range.put_cursor(text, pos, movement == Movement::Extend)
         } else {
@@ -1054,7 +1054,7 @@ fn align_selections(cx: &mut Context) {
 
     let tab_width = doc.tab_width();
     let mut column_widths: Vec<Vec<_>> = Vec::new();
-    let mut last_line = text.len_lines() + 1;
+    let mut last_line = text.len_lines(LINE_TYPE) + 1;
     let mut col = 0;
 
     for range in selection {
@@ -1498,7 +1498,7 @@ fn find_char_line_ending(
             Direction::Forward => {
                 let on_edge = line_end_char_index(&text, cursor_line) == cursor;
                 let line = cursor_line + count - 1 + (on_edge as usize);
-                if line >= text.len_lines() - 1 {
+                if line >= text.len_lines(LINE_TYPE) - 1 {
                     return range;
                 } else {
                     line
@@ -2018,7 +2018,7 @@ fn copy_selection_on_line(cx: &mut Context, direction: Direction) {
                 Direction::Backward => head_pos.row.saturating_sub(offset),
             };
 
-            if anchor_row >= text.len_lines() || head_row >= text.len_lines() {
+            if anchor_row >= text.len_lines(LINE_TYPE) || head_row >= text.len_lines(LINE_TYPE) {
                 break;
             }
 
@@ -2642,14 +2642,14 @@ fn global_search(cx: &mut Context) {
             let line_num = *line_num;
             let view = view_mut!(cx.editor);
             let text = doc.text();
-            if line_num >= text.len_lines() {
+            if line_num >= text.len_lines(LINE_TYPE) {
                 cx.editor.set_error(
                     "The line you jumped to does not exist anymore because the file has changed.",
                 );
                 return;
             }
             let start = text.line_to_char(line_num);
-            let end = text.line_to_char((line_num + 1).min(text.len_lines()));
+            let end = text.line_to_char((line_num + 1).min(text.len_lines(LINE_TYPE)));
 
             doc.set_selection(view.id, Selection::single(start, end));
             if action.align_view(view, doc.id()) {
@@ -2698,7 +2698,7 @@ fn extend_line_impl(cx: &mut Context, extend: Extend) {
         let start = text.line_to_char(start_line);
         let end = text.line_to_char(
             (end_line + 1) // newline of end_line
-                .min(text.len_lines()),
+                .min(text.len_lines(LINE_TYPE)),
         );
 
         // extend to previous/next line if current line is selected
@@ -2707,7 +2707,7 @@ fn extend_line_impl(cx: &mut Context, extend: Extend) {
                 Extend::Above => (end, text.line_to_char(start_line.saturating_sub(count))),
                 Extend::Below => (
                     start,
-                    text.line_to_char((end_line + count + 1).min(text.len_lines())),
+                    text.line_to_char((end_line + count + 1).min(text.len_lines(LINE_TYPE))),
                 ),
             }
         } else {
@@ -2715,7 +2715,7 @@ fn extend_line_impl(cx: &mut Context, extend: Extend) {
                 Extend::Above => (end, text.line_to_char(start_line.saturating_sub(count - 1))),
                 Extend::Below => (
                     start,
-                    text.line_to_char((end_line + count).min(text.len_lines())),
+                    text.line_to_char((end_line + count).min(text.len_lines(LINE_TYPE))),
                 ),
             }
         };
@@ -2735,7 +2735,7 @@ fn select_line_impl(cx: &mut Context, extend: Extend) {
     let mut count = cx.count();
     let (view, doc) = current!(cx.editor);
     let text = doc.text();
-    let saturating_add = |a: usize, b: usize| (a + b).min(text.len_lines());
+    let saturating_add = |a: usize, b: usize| (a + b).min(text.len_lines(LINE_TYPE));
     let selection = doc.selection(view.id).clone().transform(|range| {
         let (start_line, end_line) = range.line_range(text.slice(..));
         let start = text.line_to_char(start_line);
@@ -2789,7 +2789,7 @@ fn extend_to_line_bounds(cx: &mut Context) {
 
             let (start_line, end_line) = range.line_range(text.slice(..));
             let start = text.line_to_char(start_line);
-            let end = text.line_to_char((end_line + 1).min(text.len_lines()));
+            let end = text.line_to_char((end_line + 1).min(text.len_lines(LINE_TYPE)));
 
             Range::new(start, end).with_direction(range.direction())
         }),
@@ -2818,10 +2818,10 @@ fn shrink_to_line_bounds(cx: &mut Context) {
             // we need to get the start position of the next line. In
             // the editor, this will correspond to the cursor being on
             // the EOL whitespace character, which is what we want.
-            let mut end = text.line_to_char((end_line + 1).min(text.len_lines()));
+            let mut end = text.line_to_char((end_line + 1).min(text.len_lines(LINE_TYPE)));
 
             if start != range.from() {
-                start = text.line_to_char((start_line + 1).min(text.len_lines()));
+                start = text.line_to_char((start_line + 1).min(text.len_lines(LINE_TYPE)));
             }
 
             if end != range.to() {
@@ -2841,13 +2841,13 @@ enum Operation {
 fn selection_is_linewise(selection: &Selection, text: &Rope) -> bool {
     selection.ranges().iter().all(|range| {
         let text = text.slice(..);
-        if range.slice(text).len_lines() < 2 {
+        if range.slice(text).len_lines(LINE_TYPE) < 2 {
             return false;
         }
         // If the start of the selection is at the start of a line and the end at the end of a line.
         let (start_line, end_line) = range.line_range(text);
         let start = text.line_to_char(start_line);
-        let end = text.line_to_char((end_line + 1).min(text.len_lines()));
+        let end = text.line_to_char((end_line + 1).min(text.len_lines(LINE_TYPE)));
         start == range.from() && end == range.to()
     })
 }
@@ -3546,7 +3546,7 @@ fn insert_with_indent(cx: &mut Context, cursor_fallback: IndentFallbackPos) {
             // move cursor to the fallback position
             let pos = match cursor_fallback {
                 IndentFallbackPos::LineStart => text
-                    .line(cursor_line)
+                    .line(cursor_line, LINE_TYPE)
                     .first_non_whitespace_char()
                     .map(|ws_offset| ws_offset + cursor_line_start)
                     .unwrap_or(cursor_line_start),
@@ -3680,7 +3680,7 @@ fn open(cx: &mut Context, open: Open, comment_continuation: CommentContinuation)
             )
         };
 
-        let line = text.line(curr_line_num);
+        let line = text.line(curr_line_num, LINE_TYPE);
         let indent = match line.first_non_whitespace_char() {
             Some(pos) if continue_comment_token.is_some() => line.slice(..pos).to_string(),
             _ => indent::indent_for_newline(
@@ -3789,11 +3789,11 @@ fn goto_line_without_jumplist(
     if let Some(count) = count {
         let (view, doc) = current!(editor);
         let text = doc.text().slice(..);
-        let max_line = if text.line(text.len_lines() - 1).len_chars() == 0 {
+        let max_line = if text.line(text.len_lines(LINE_TYPE) - 1, LINE_TYPE).len_chars() == 0 {
             // If the last line is blank, don't jump to it.
-            text.len_lines().saturating_sub(2)
+            text.len_lines(LINE_TYPE).saturating_sub(2)
         } else {
-            text.len_lines() - 1
+            text.len_lines(LINE_TYPE) - 1
         };
         let line_idx = std::cmp::min(count.get() - 1, max_line);
         let pos = text.line_to_char(line_idx);
@@ -3817,11 +3817,11 @@ fn extend_to_last_line(cx: &mut Context) {
 fn goto_last_line_impl(cx: &mut Context, movement: Movement) {
     let (view, doc) = current!(cx.editor);
     let text = doc.text().slice(..);
-    let line_idx = if text.line(text.len_lines() - 1).len_chars() == 0 {
+    let line_idx = if text.line(text.len_lines(LINE_TYPE) - 1, LINE_TYPE).len_chars() == 0 {
         // If the last line is blank, don't jump to it.
-        text.len_lines().saturating_sub(2)
+        text.len_lines(LINE_TYPE).saturating_sub(2)
     } else {
-        text.len_lines() - 1
+        text.len_lines(LINE_TYPE) - 1
     };
     let pos = text.line_to_char(line_idx);
     let selection = doc
@@ -4228,7 +4228,7 @@ pub mod insert {
                 text.slice(line_start..pos).last_non_whitespace_char()
             {
                 let first_trailing_whitespace_char = (line_start + idx + 1).min(pos);
-                let line = text.line(current_line);
+                let line = text.line(current_line, LINE_TYPE);
 
                 let indent = match line.first_non_whitespace_char() {
                     Some(pos) if continue_comment_token.is_some() => line.slice(..pos).to_string(),
@@ -4672,7 +4672,7 @@ fn paste_impl(
             // paste linewise after
             (Paste::After, true) => {
                 let line = range.line_range(text.slice(..)).1;
-                text.line_to_char((line + 1).min(text.len_lines()))
+                text.line_to_char((line + 1).min(text.len_lines(LINE_TYPE)))
             }
             // paste insert
             (Paste::Before, false) => range.from(),
@@ -4858,7 +4858,7 @@ fn indent(cx: &mut Context) {
     let transaction = Transaction::change(
         doc.text(),
         lines.into_iter().filter_map(|line| {
-            let is_blank = doc.text().line(line).chunks().all(|s| s.trim().is_empty());
+            let is_blank = doc.text().line(line, LINE_TYPE).chunks().all(|s| s.trim().is_empty());
             if is_blank {
                 return None;
             }
@@ -4879,7 +4879,7 @@ fn unindent(cx: &mut Context) {
     let indent_width = count * doc.indent_width();
 
     for line_idx in lines {
-        let line = doc.text().line(line_idx);
+        let line = doc.text().line(line_idx, LINE_TYPE);
         let mut width = 0;
         let mut pos = 0;
 
@@ -4996,7 +4996,7 @@ fn join_selections_impl(cx: &mut Context, select_space: bool) {
     for selection in doc.selection(view.id) {
         let (start, mut end) = selection.line_range(slice);
         if start == end {
-            end = (end + 1).min(text.len_lines() - 1);
+            end = (end + 1).min(text.len_lines(LINE_TYPE) - 1);
         }
         let lines = start..end;
 

@@ -55,6 +55,7 @@ use helix_core::{
 use helix_dap as dap;
 use helix_lsp::lsp;
 use helix_stdx::path::canonicalize;
+use helix_stdx::rope::ropey1_shims::*;
 
 use serde::{ser::SerializeMap, Deserialize, Deserializer, Serialize, Serializer};
 

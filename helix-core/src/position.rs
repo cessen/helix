@@ -4,7 +4,7 @@ use std::{
     ops::{Add, AddAssign, Sub, SubAssign},
 };
 
-use helix_stdx::rope::RopeSliceExt;
+use helix_stdx::rope::{ropey1_shims::*, RopeSliceExt, LINE_TYPE};
 
 use crate::{
     chars::char_is_line_ending,
@@ -262,13 +262,13 @@ pub fn visual_offset_from_anchor(
 pub fn pos_at_coords(text: RopeSlice, coords: Position, limit_before_line_ending: bool) -> usize {
     let Position { mut row, col } = coords;
     if limit_before_line_ending {
-        row = row.min(text.len_lines() - 1);
+        row = row.min(text.len_lines(LINE_TYPE) - 1);
     };
     let line_start = text.line_to_char(row);
     let line_end = if limit_before_line_ending {
         line_end_char_index(&text, row)
     } else {
-        text.line_to_char((row + 1).min(text.len_lines()))
+        text.line_to_char((row + 1).min(text.len_lines(LINE_TYPE)))
     };
 
     let mut col_char_offset = 0;
@@ -297,7 +297,7 @@ pub fn pos_at_coords(text: RopeSlice, coords: Position, limit_before_line_ending
 #[deprecated = "Doesn't account for softwrap or decorations, use char_idx_at_visual_offset instead"]
 pub fn pos_at_visual_coords(text: RopeSlice, coords: Position, tab_width: usize) -> usize {
     let Position { mut row, col } = coords;
-    row = row.min(text.len_lines() - 1);
+    row = row.min(text.len_lines(LINE_TYPE) - 1);
     let line_start = text.line_to_char(row);
     let line_end = line_end_char_index(&text, row);
 

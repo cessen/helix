@@ -7,7 +7,7 @@ use crate::{
     syntax::config::BlockCommentToken, Change, Range, Rope, RopeSlice, Selection, Tendril,
     Transaction,
 };
-use helix_stdx::rope::RopeSliceExt;
+use helix_stdx::rope::{ropey1_shims::*, RopeSliceExt, LINE_TYPE};
 use std::borrow::Cow;
 
 pub const DEFAULT_COMMENT_TOKEN: &str = "#";
@@ -18,7 +18,7 @@ pub fn get_comment_token<'a, S: AsRef<str>>(
     tokens: &'a [S],
     line_num: usize,
 ) -> Option<&'a str> {
-    let line = text.line(line_num);
+    let line = text.line(line_num, LINE_TYPE);
     let start = line.first_non_whitespace_char()?;
 
     tokens
@@ -49,7 +49,7 @@ fn find_line_comment(
     let token_len = token.chars().count();
 
     for line in lines {
-        let line_slice = text.line(line);
+        let line_slice = text.line(line, LINE_TYPE);
         if let Some(pos) = line_slice.first_non_whitespace_char() {
             let len = line_slice.len_chars();
 
@@ -90,8 +90,8 @@ pub fn toggle_line_comments(doc: &Rope, selection: &Selection, token: Option<&st
     let mut min_next_line = 0;
     for selection in selection {
         let (start, end) = selection.line_range(text);
-        let start = start.clamp(min_next_line, text.len_lines());
-        let end = (end + 1).min(text.len_lines());
+        let start = start.clamp(min_next_line, text.len_lines(LINE_TYPE));
+        let end = (end + 1).min(text.len_lines(LINE_TYPE));
 
         lines.extend(start..end);
         min_next_line = end;
@@ -316,7 +316,10 @@ pub fn split_lines_of_selection(text: RopeSlice, selection: &Selection) -> Selec
     for range in selection.ranges() {
         let (line_start, line_end) = range.line_range(text.slice(..));
         let mut pos = text.line_to_char(line_start);
-        for line in text.slice(pos..text.line_to_char(line_end + 1)).lines() {
+        for line in text
+            .slice(pos..text.line_to_char(line_end + 1))
+            .lines(LINE_TYPE)
+        {
             let start = pos;
             pos += line.len_chars();
             ranges.push(Range::new(start, pos));

@@ -9,6 +9,7 @@ use std::{
 use helix_core::{self as core, completion::CompletionProvider, Selection, Transaction};
 use helix_event::TaskHandle;
 use helix_stdx::path::{self, canonicalize, fold_home_dir, get_path_suffix};
+use helix_stdx::rope::ropey1_shims::*;
 use helix_view::{document::SavePoint, handlers::completion::ResponseContext, Document};
 use url::Url;
 

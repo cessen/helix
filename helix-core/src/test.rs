@@ -1,5 +1,6 @@
 //! Test helpers.
 use crate::{Range, Selection};
+use helix_stdx::rope::ropey1_shims::*;
 use ropey::Rope;
 use smallvec::SmallVec;
 use std::cmp::Reverse;

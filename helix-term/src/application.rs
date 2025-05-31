@@ -7,6 +7,7 @@ use helix_lsp::{
     LanguageServerId, LspProgressMap,
 };
 use helix_stdx::path::get_relative_path;
+use helix_stdx::rope::{ropey1_shims::*, LINE_TYPE};
 use helix_view::{
     align_view,
     document::{DocumentOpenError, DocumentSavedEventResult},
@@ -570,7 +571,7 @@ impl Application {
 
         doc.set_last_saved_revision(doc_save_event.revision, doc_save_event.save_time);
 
-        let lines = doc_save_event.text.len_lines();
+        let lines = doc_save_event.text.len_lines(LINE_TYPE);
         let bytes = doc_save_event.text.len_bytes();
 
         self.editor

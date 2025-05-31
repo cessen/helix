@@ -1,6 +1,7 @@
 use std::fmt::Write;
 
 use helix_core::syntax::config::LanguageServerFeature;
+use helix_stdx::rope::{ropey1_shims::*, LINE_TYPE};
 
 use crate::{
     editor::GutterType,
@@ -209,7 +210,7 @@ pub fn line_numbers<'doc>(
 /// `editor.gutters.line-numbers.min-width` settings.
 fn line_numbers_width(view: &View, doc: &Document) -> usize {
     let text = doc.text();
-    let last_line = text.len_lines().saturating_sub(1);
+    let last_line = text.len_lines(LINE_TYPE).saturating_sub(1);
     let draw_last = text.line_to_byte(last_line) < text.len_bytes();
     let last_drawn = if draw_last { last_line + 1 } else { last_line };
     let digits = count_digits(last_drawn);

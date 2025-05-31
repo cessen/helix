@@ -15,6 +15,7 @@ use crate::{
 };
 use futures_util::future::BoxFuture;
 use helix_event::AsyncHook;
+use helix_stdx::rope::{ropey1_shims::*, LINE_TYPE};
 use nucleo::pattern::{CaseMatching, Normalization};
 use nucleo::{Config, Nucleo};
 use thiserror::Error;
@@ -883,7 +884,7 @@ impl<T: 'static + Send + Sync, D: 'static + Send + Sync> Picker<T, D> {
             let doc = match preview.document() {
                 Some(doc)
                     if range.map_or(true, |(start, end)| {
-                        start <= end && end <= doc.text().len_lines()
+                        start <= end && end <= doc.text().len_lines(LINE_TYPE)
                     }) =>
                 {
                     doc

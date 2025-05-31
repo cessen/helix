@@ -13,7 +13,7 @@ use crate::{
     Assoc, ChangeSet, RopeSlice,
 };
 use helix_stdx::range::is_subset;
-use helix_stdx::rope::{self, RopeSliceExt};
+use helix_stdx::rope::{self, ropey1_shims::*, RopeSliceExt, LINE_TYPE};
 use smallvec::{smallvec, SmallVec};
 use std::{borrow::Cow, iter, slice};
 
@@ -830,7 +830,7 @@ pub fn split_on_newline(text: RopeSlice, selection: &Selection) -> Selection {
 
         let mut start = sel_start;
 
-        for line in sel.slice(text).lines() {
+        for line in sel.slice(text).lines(LINE_TYPE) {
             let Some(line_ending) = get_line_ending(&line) else {
                 break;
             };

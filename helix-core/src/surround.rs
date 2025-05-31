@@ -11,6 +11,8 @@ use crate::{
 };
 use ropey::RopeSlice;
 
+use helix_stdx::rope::ropey1_shims::*;
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum Error {
     PairNotFound,

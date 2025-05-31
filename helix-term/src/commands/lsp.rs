@@ -18,6 +18,7 @@ use helix_core::{
     text_annotations::InlineAnnotation, Selection, Uri,
 };
 use helix_stdx::path;
+use helix_stdx::rope::{ropey1_shims::*, LINE_TYPE};
 use helix_view::{
     document::{DocumentInlayHints, DocumentInlayHintsId},
     editor::Action,
@@ -1280,7 +1281,7 @@ fn compute_inlay_hints_for_view(
         .next()?;
 
     let doc_text = doc.text();
-    let len_lines = doc_text.len_lines();
+    let len_lines = doc_text.len_lines(LINE_TYPE);
 
     // Compute ~3 times the current view height of inlay hints, that way some scrolling
     // will not show half the view with hints and half without while still being faster

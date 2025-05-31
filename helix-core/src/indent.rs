@@ -1,6 +1,6 @@
 use std::{borrow::Cow, collections::HashMap, iter};
 
-use helix_stdx::rope::RopeSliceExt;
+use helix_stdx::rope::{ropey1_shims::*, RopeSliceExt, LINE_TYPE};
 
 use crate::{
     chars::{char_is_line_ending, char_is_whitespace},
@@ -84,7 +84,7 @@ pub fn auto_detect_indent_style(document_text: &Rope) -> Option<IndentStyle> {
 
         // Loop through the lines, checking for and recording indentation
         // increases as we go.
-        'outer: for line in document_text.lines().take(1000) {
+        'outer: for line in document_text.lines(LINE_TYPE).take(1000) {
             let mut c_iter = line.chars();
 
             // Is first character a tab or space?
@@ -766,11 +766,15 @@ fn extend_nodes<'a>(
                         if text.byte_to_line(deepest_preceding.end_byte() as usize) == line {
                             extend_node = true;
                         } else {
-                            let cursor_indent =
-                                indent_level_for_line(text.line(line), tab_width, indent_width);
+                            let cursor_indent = indent_level_for_line(
+                                text.line(line, LINE_TYPE),
+                                tab_width,
+                                indent_width,
+                            );
                             let node_indent = indent_level_for_line(
                                 text.line(
                                     text.byte_to_line(deepest_preceding.start_byte() as usize),
+                                    LINE_TYPE,
                                 ),
                                 tab_width,
                                 indent_width,
@@ -1036,7 +1040,7 @@ pub fn indent_for_newline(
                 const MAX_ATTEMPTS: usize = 4;
                 let mut num_attempts = 0;
                 for line_idx in (0..=line_before).rev() {
-                    let line = text.line(line_idx);
+                    let line = text.line(line_idx, LINE_TYPE);
                     let first_non_whitespace_char = match line.first_non_whitespace_char() {
                         Some(i) => i,
                         None => {
@@ -1074,7 +1078,8 @@ pub fn indent_for_newline(
         };
     }
     // Fallback in case we either don't have indent queries or they failed for some reason
-    let indent_level = indent_level_for_line(text.line(current_line), tab_width, indent_width);
+    let indent_level =
+        indent_level_for_line(text.line(current_line, LINE_TYPE), tab_width, indent_width);
     indent_style.as_str().repeat(indent_level)
 }
 

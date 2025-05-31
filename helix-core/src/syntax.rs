@@ -14,7 +14,7 @@ use anyhow::{Context, Result};
 use arc_swap::{ArcSwap, Guard};
 use config::{Configuration, FileType, LanguageConfiguration, LanguageServerConfiguration};
 use helix_loader::grammar::get_language;
-use helix_stdx::rope::RopeSliceExt as _;
+use helix_stdx::rope::{ropey1_shims::*, RopeSliceExt as _};
 use once_cell::sync::OnceCell;
 use ropey::RopeSlice;
 use tree_house::{

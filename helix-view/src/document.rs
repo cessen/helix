@@ -14,7 +14,7 @@ use helix_core::syntax::config::LanguageServerFeature;
 use helix_core::text_annotations::{InlineAnnotation, Overlay};
 use helix_event::TaskController;
 use helix_lsp::util::lsp_pos_to_pos;
-use helix_stdx::faccess::{copy_metadata, readonly};
+use helix_stdx::{faccess::{copy_metadata, readonly}, rope::ropey1_shims::*};
 use helix_vcs::{DiffHandle, DiffProviderRegistry};
 use once_cell::sync::OnceCell;
 use thiserror;

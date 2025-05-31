@@ -16,6 +16,7 @@ use helix_core::{
     Transaction,
     VisualOffsetError::{PosAfterMaxRow, PosBeforeAnchorRow},
 };
+use helix_stdx::rope::{ropey1_shims::*, LINE_TYPE};
 
 use std::{
     collections::{HashMap, VecDeque},
@@ -361,7 +362,7 @@ impl View {
         let line = doc_text.char_to_line(doc.view_offset(self.id).anchor.min(doc_text.len_chars()));
         // Saturating subs to make it inclusive zero indexing.
         (line + self.inner_height())
-            .min(doc_text.len_lines())
+            .min(doc_text.len_lines(LINE_TYPE))
             .saturating_sub(1)
     }
 
@@ -378,7 +379,7 @@ impl View {
         let visual_height = doc.view_offset(self.id).vertical_offset + viewport.height as usize;
 
         // fast path when the EOF is not visible on the screen,
-        if self.estimate_last_doc_line(doc) < doc_text.len_lines() - 1 {
+        if self.estimate_last_doc_line(doc) < doc_text.len_lines(LINE_TYPE) - 1 {
             return visual_height.saturating_sub(1);
         }
 

@@ -11,6 +11,7 @@ use std::{
 };
 
 use crate::env::current_working_dir;
+use crate::rope::ropey1_shims::*;
 
 /// Replaces users home directory from `path` with tilde `~` if the directory
 /// is available, otherwise returns the path unchanged.

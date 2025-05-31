@@ -15,7 +15,7 @@ use futures_util::stream::select_all::SelectAll;
 use helix_core::syntax::config::{
     LanguageConfiguration, LanguageServerConfiguration, LanguageServerFeatures,
 };
-use helix_stdx::path;
+use helix_stdx::{path, rope::{ropey1_shims::*, LINE_TYPE}};
 use slotmap::SlotMap;
 use tokio::sync::mpsc::UnboundedReceiver;
 
@@ -135,7 +135,7 @@ pub mod util {
         offset_encoding: OffsetEncoding,
     ) -> Option<usize> {
         let pos_line = pos.line as usize;
-        if pos_line > doc.len_lines() - 1 {
+        if pos_line > doc.len_lines(LINE_TYPE) - 1 {
             // If it extends past the end, truncate it to the end. This is because the
             // way the LSP describes the range including the last newline is by
             // specifying a line number after what we would call the last line.

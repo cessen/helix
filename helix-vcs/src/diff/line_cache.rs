@@ -13,6 +13,7 @@
 use std::mem::transmute;
 
 use helix_core::{Rope, RopeSlice};
+use helix_stdx::rope::{ropey1_shims::*, LINE_TYPE};
 use imara_diff::intern::{InternedInput, Interner};
 
 use super::{MAX_DIFF_BYTES, MAX_DIFF_LINES};
@@ -30,9 +31,9 @@ impl InternedRopeLines {
     pub fn new(diff_base: Rope, doc: Rope) -> InternedRopeLines {
         let mut res = InternedRopeLines {
             interned: InternedInput {
-                before: Vec::with_capacity(diff_base.len_lines()),
-                after: Vec::with_capacity(doc.len_lines()),
-                interner: Interner::new(diff_base.len_lines() + doc.len_lines()),
+                before: Vec::with_capacity(diff_base.len_lines(LINE_TYPE)),
+                after: Vec::with_capacity(doc.len_lines(LINE_TYPE)),
+                interner: Interner::new(diff_base.len_lines(LINE_TYPE) + doc.len_lines(LINE_TYPE)),
             },
             diff_base: Box::new(diff_base),
             doc: Box::new(doc),
@@ -91,7 +92,7 @@ impl InternedRopeLines {
         // That means that on calls to update there exist no references to `self.interned`.
         let before = self
             .diff_base
-            .lines()
+            .lines(LINE_TYPE)
             .map(|line: RopeSlice| -> RopeSlice<'static> { unsafe { transmute(line) } });
         self.interned.update_before(before);
         self.num_tokens_diff_base = self.interned.interner.num_tokens();
@@ -108,7 +109,7 @@ impl InternedRopeLines {
         // That means that on calls to update there exist no references to `self.interned`.
         let after = self
             .doc
-            .lines()
+            .lines(LINE_TYPE)
             .map(|line: RopeSlice| -> RopeSlice<'static> { unsafe { transmute(line) } });
         self.interned.update_after(after);
     }
@@ -119,8 +120,8 @@ impl InternedRopeLines {
         // diff itself (the diff performance only depends on the number of tokens)
         // the interning runtime depends mostly on filesize and is actually dominant
         // for large files
-        self.doc.len_lines() > MAX_DIFF_LINES
-            || self.diff_base.len_lines() > MAX_DIFF_LINES
+        self.doc.len_lines(LINE_TYPE) > MAX_DIFF_LINES
+            || self.diff_base.len_lines(LINE_TYPE) > MAX_DIFF_LINES
             || self.doc.len_bytes() > MAX_DIFF_BYTES
             || self.diff_base.len_bytes() > MAX_DIFF_BYTES
     }

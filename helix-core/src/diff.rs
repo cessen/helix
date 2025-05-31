@@ -5,6 +5,8 @@ use imara_diff::intern::InternedInput;
 use imara_diff::Algorithm;
 use ropey::RopeSlice;
 
+use helix_stdx::rope::{ropey1_shims::*, LINE_TYPE};
+
 use crate::{ChangeSet, Rope, Tendril, Transaction};
 
 /// A `imara_diff::Sink` that builds a `ChangeSet` for a character diff of a hunk
@@ -145,12 +147,12 @@ impl<'a> imara_diff::intern::TokenSource for RopeLines<'a> {
     type Tokenizer = ropey::iter::Lines<'a>;
 
     fn tokenize(&self) -> Self::Tokenizer {
-        self.0.lines()
+        self.0.lines(LINE_TYPE)
     }
 
     fn estimate_tokens(&self) -> u32 {
         // we can provide a perfect estimate which is very nice for performance
-        self.0.len_lines() as u32
+        self.0.len_lines(LINE_TYPE) as u32
     }
 }
 

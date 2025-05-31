@@ -19,7 +19,7 @@ mod test;
 
 use unicode_segmentation::{Graphemes, UnicodeSegmentation};
 
-use helix_stdx::rope::{RopeGraphemes, RopeSliceExt};
+use helix_stdx::rope::{ropey1_shims::*, RopeGraphemes, RopeSliceExt};
 
 use crate::graphemes::{Grapheme, GraphemeStr};
 use crate::syntax::Highlight;
