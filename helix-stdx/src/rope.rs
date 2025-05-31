@@ -24,6 +24,23 @@ pub mod ropey1_shims {
         Rope, RopeSlice,
     };
 
+    fn range_to_start_end<R>(range: R, max_end: usize) -> [usize; 2]
+    where
+        R: RangeBounds<usize>,
+    {
+        let start = match range.start_bound() {
+            Bound::Included(&i) => i,
+            Bound::Excluded(&i) => i + 1,
+            Bound::Unbounded => 0,
+        };
+        let end = match range.end_bound() {
+            Bound::Included(&i) => i - 1,
+            Bound::Excluded(&i) => i,
+            Bound::Unbounded => max_end,
+        };
+        [start, end]
+    }
+
     #[allow(non_camel_case_types)]
     pub trait Ropey1Shim_General {
         fn len_bytes(&self) -> usize;
@@ -269,16 +286,7 @@ pub mod ropey1_shims {
         where
             R: RangeBounds<usize>,
         {
-            let start_char = match char_range.start_bound() {
-                Bound::Included(&i) => i,
-                Bound::Excluded(&i) => i + 1,
-                Bound::Unbounded => 0,
-            };
-            let end_char = match char_range.end_bound() {
-                Bound::Included(&i) => i - 1,
-                Bound::Excluded(&i) => i,
-                Bound::Unbounded => self.len_chars(),
-            };
+            let [start_char, end_char] = range_to_start_end(char_range, self.len_chars());
 
             let start_byte = self.char_to_byte_idx(start_char);
             let end_byte = self.char_to_byte_idx(end_char);
@@ -297,16 +305,7 @@ pub mod ropey1_shims {
         where
             R: RangeBounds<usize>,
         {
-            let start_char = match char_range.start_bound() {
-                Bound::Included(&i) => i,
-                Bound::Excluded(&i) => i + 1,
-                Bound::Unbounded => 0,
-            };
-            let end_char = match char_range.end_bound() {
-                Bound::Included(&i) => i - 1,
-                Bound::Excluded(&i) => i,
-                Bound::Unbounded => self.len_chars(),
-            };
+            let [start_char, end_char] = range_to_start_end(char_range, self.len_chars());
 
             let start_byte = self.char_to_byte_idx(start_char);
             let end_byte = self.char_to_byte_idx(end_char);
@@ -317,33 +316,20 @@ pub mod ropey1_shims {
         where
             R: RangeBounds<usize>,
         {
-            let end_byte = match byte_range.end_bound() {
-                Bound::Included(&i) => i - 1,
-                Bound::Excluded(&i) => i,
-                Bound::Unbounded => self.len_chars(),
-            };
+            let [start_byte, end_byte] = range_to_start_end(byte_range, self.len());
 
             if end_byte > self.len() {
                 return None;
             }
 
             // Slicing is already by bytes in Ropey 2.x.
-            Some(self.slice(byte_range))
+            Some(self.slice(start_byte..end_byte))
         }
         fn get_char_slice<R>(&self, char_range: R) -> Option<RopeSlice<'_>>
         where
             R: RangeBounds<usize>,
         {
-            let start_char = match char_range.start_bound() {
-                Bound::Included(&i) => i,
-                Bound::Excluded(&i) => i + 1,
-                Bound::Unbounded => 0,
-            };
-            let end_char = match char_range.end_bound() {
-                Bound::Included(&i) => i - 1,
-                Bound::Excluded(&i) => i,
-                Bound::Unbounded => self.len_chars(),
-            };
+            let [start_char, end_char] = range_to_start_end(char_range, self.len_chars());
 
             let start_byte = self.char_to_byte_idx(start_char);
             let end_byte = self.char_to_byte_idx(end_char);
@@ -400,16 +386,7 @@ pub mod ropey1_shims {
         where
             R: RangeBounds<usize>,
         {
-            let start_char = match char_range.start_bound() {
-                Bound::Included(&i) => i,
-                Bound::Excluded(&i) => i + 1,
-                Bound::Unbounded => 0,
-            };
-            let end_char = match char_range.end_bound() {
-                Bound::Included(&i) => i - 1,
-                Bound::Excluded(&i) => i,
-                Bound::Unbounded => self.len_chars(),
-            };
+            let [start_char, end_char] = range_to_start_end(char_range, self.len_chars());
 
             let start_byte = self.char_to_byte_idx(start_char);
             let end_byte = self.char_to_byte_idx(end_char);
@@ -420,33 +397,20 @@ pub mod ropey1_shims {
         where
             R: RangeBounds<usize>,
         {
-            let end_byte = match byte_range.end_bound() {
-                Bound::Included(&i) => i - 1,
-                Bound::Excluded(&i) => i,
-                Bound::Unbounded => self.len_chars(),
-            };
+            let [start_byte, end_byte] = range_to_start_end(byte_range, self.len());
 
             if end_byte > self.len() {
                 return None;
             }
 
             // Slicing is already by bytes in Ropey 2.x.
-            Some(self.slice(byte_range))
+            Some(self.slice(start_byte..end_byte))
         }
         fn get_char_slice<R>(&self, char_range: R) -> Option<RopeSlice<'a>>
         where
             R: RangeBounds<usize>,
         {
-            let start_char = match char_range.start_bound() {
-                Bound::Included(&i) => i,
-                Bound::Excluded(&i) => i + 1,
-                Bound::Unbounded => 0,
-            };
-            let end_char = match char_range.end_bound() {
-                Bound::Included(&i) => i - 1,
-                Bound::Excluded(&i) => i,
-                Bound::Unbounded => self.len_chars(),
-            };
+            let [start_char, end_char] = range_to_start_end(char_range, self.len_chars());
 
             let start_byte = self.char_to_byte_idx(start_char);
             let end_byte = self.char_to_byte_idx(end_char);
