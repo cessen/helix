@@ -208,6 +208,11 @@ pub mod ropey1_shims {
 
     #[allow(non_camel_case_types)]
     pub trait Ropey1Shim_Rope {
+        fn insert_at_char(&mut self, char_idx: usize, text: &str);
+        fn remove_char_range<R>(&mut self, char_range: R)
+        where
+            R: RangeBounds<usize>;
+
         fn byte_slice<R>(&self, byte_range: R) -> RopeSlice<'_>
         where
             R: RangeBounds<usize>;
@@ -255,6 +260,32 @@ pub mod ropey1_shims {
     }
 
     impl Ropey1Shim_Rope for Rope {
+        fn insert_at_char(&mut self, char_idx: usize, text: &str) {
+            let byte_idx = self.char_to_byte_idx(char_idx);
+            self.insert(byte_idx, text);
+        }
+
+        fn remove_char_range<R>(&mut self, char_range: R)
+        where
+            R: RangeBounds<usize>,
+        {
+            let start_char = match char_range.start_bound() {
+                Bound::Included(&i) => i,
+                Bound::Excluded(&i) => i + 1,
+                Bound::Unbounded => 0,
+            };
+            let end_char = match char_range.end_bound() {
+                Bound::Included(&i) => i - 1,
+                Bound::Excluded(&i) => i,
+                Bound::Unbounded => self.len_chars(),
+            };
+
+            let start_byte = self.char_to_byte_idx(start_char);
+            let end_byte = self.char_to_byte_idx(end_char);
+
+            self.remove(start_byte..end_byte)
+        }
+
         fn byte_slice<R>(&self, byte_range: R) -> RopeSlice<'_>
         where
             R: RangeBounds<usize>,
@@ -277,8 +308,8 @@ pub mod ropey1_shims {
                 Bound::Unbounded => self.len_chars(),
             };
 
-            let start_byte = self.byte_to_char_idx(start_char);
-            let end_byte = self.byte_to_char_idx(end_char);
+            let start_byte = self.char_to_byte_idx(start_char);
+            let end_byte = self.char_to_byte_idx(end_char);
 
             self.slice(start_byte..end_byte)
         }
@@ -314,8 +345,8 @@ pub mod ropey1_shims {
                 Bound::Unbounded => self.len_chars(),
             };
 
-            let start_byte = self.byte_to_char_idx(start_char);
-            let end_byte = self.byte_to_char_idx(end_char);
+            let start_byte = self.char_to_byte_idx(start_char);
+            let end_byte = self.char_to_byte_idx(end_char);
 
             if end_byte > self.len() {
                 return None;
@@ -380,8 +411,8 @@ pub mod ropey1_shims {
                 Bound::Unbounded => self.len_chars(),
             };
 
-            let start_byte = self.byte_to_char_idx(start_char);
-            let end_byte = self.byte_to_char_idx(end_char);
+            let start_byte = self.char_to_byte_idx(start_char);
+            let end_byte = self.char_to_byte_idx(end_char);
 
             self.slice(start_byte..end_byte)
         }
@@ -417,8 +448,8 @@ pub mod ropey1_shims {
                 Bound::Unbounded => self.len_chars(),
             };
 
-            let start_byte = self.byte_to_char_idx(start_char);
-            let end_byte = self.byte_to_char_idx(end_char);
+            let start_byte = self.char_to_byte_idx(start_char);
+            let end_byte = self.char_to_byte_idx(end_char);
 
             if end_byte > self.len() {
                 return None;

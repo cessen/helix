@@ -345,11 +345,11 @@ impl ChangeSet {
                     pos += n;
                 }
                 Delete(n) => {
-                    text.remove(pos..pos + *n);
+                    text.remove_char_range(pos..pos + *n);
                     // pos += n;
                 }
                 Insert(s) => {
-                    text.insert(pos, s);
+                    text.insert_at_char(pos, s);
                     pos += s.chars().count();
                 }
             }
