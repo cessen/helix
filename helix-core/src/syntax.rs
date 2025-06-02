@@ -20,7 +20,7 @@ use ropey::RopeSlice;
 use tree_house::{
     highlighter,
     query_iter::QueryIter,
-    tree_sitter::{Grammar, InactiveQueryCursor, InputEdit, Node, Query, RopeInput, Tree},
+    tree_sitter::{Grammar, InactiveQueryCursor, InputEdit, Node, Query, Ropey2Input, Tree},
     Error, InjectionLanguageMarker, LanguageConfig as SyntaxConfig, Layer,
 };
 
@@ -869,7 +869,7 @@ impl TextObjectQuery {
         // back to defaults when reusing them from the cursor cache.
         cursor.set_byte_range(0..u32::MAX);
         cursor.set_match_limit(TREE_SITTER_MATCH_LIMIT);
-        let mut cursor = cursor.execute_query(&self.query, node, RopeInput::new(slice));
+        let mut cursor = cursor.execute_query(&self.query, node, Ropey2Input::new(slice));
         let capture_node = iter::from_fn(move || {
             let (mat, _) = cursor.next_matched_node()?;
             Some(mat.nodes_for_capture(capture).cloned().collect())

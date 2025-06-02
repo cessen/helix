@@ -8,7 +8,7 @@ use ropey::iter::Chunks;
 use ropey::{ChunkCursor, RopeSlice};
 use unicode_segmentation::{GraphemeCursor, GraphemeIncomplete};
 
-pub const LINE_TYPE: ropey::LineType = ropey::LineType::LF;
+pub const LINE_TYPE: ropey::LineType = ropey::LineType::LF_CR;
 
 /// Shims for backwards compatibility with Ropey 1.x.
 ///

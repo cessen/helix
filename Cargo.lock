@@ -1418,7 +1418,7 @@ dependencies = [
  "quickcheck",
  "regex",
  "regex-cursor",
- "ropey",
+ "ropey 2.0.0-alpha.3",
  "serde",
  "serde_json",
  "slotmap",
@@ -1527,7 +1527,7 @@ dependencies = [
  "once_cell",
  "regex-automata",
  "regex-cursor",
- "ropey",
+ "ropey 2.0.0-alpha.3",
  "rustix 1.0.7",
  "tempfile",
  "unicode-segmentation",
@@ -2326,12 +2326,14 @@ dependencies = [
 [[package]]
 name = "regex-cursor"
 version = "0.1.5"
+source = "git+https://github.com/cessen/regex-cursor.git?branch=ropey2#7b8facc3b184da133f86f7c46de3d18d16708bcc"
 dependencies = [
  "log",
  "memchr",
  "regex-automata",
  "regex-syntax",
- "ropey",
+ "ropey 1.6.1",
+ "ropey 2.0.0-alpha.3",
 ]
 
 [[package]]
@@ -2342,7 +2344,19 @@ checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 
 [[package]]
 name = "ropey"
-version = "2.0.0-alpha.2"
+version = "1.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "93411e420bcd1a75ddd1dc3caf18c23155eda2c090631a85af21ba19e97093b5"
+dependencies = [
+ "smallvec",
+ "str_indices",
+]
+
+[[package]]
+name = "ropey"
+version = "2.0.0-alpha.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1a6bae11a8c92fe67ffe2817f38315372f113617978665635147fd5eb6b789c4"
 dependencies = [
  "str_indices",
 ]
@@ -2798,6 +2812,7 @@ checksum = "bfb942dfe1d8e29a7ee7fcbde5bd2b9a25fb89aa70caea2eba3bee836ff41076"
 [[package]]
 name = "tree-house"
 version = "0.1.0"
+source = "git+https://github.com/cessen/tree-house.git?branch=ropey2#eef376986cb0982aea4f2061d6b738b8f0f86bd0"
 dependencies = [
  "arc-swap",
  "hashbrown 0.15.3",
@@ -2805,7 +2820,7 @@ dependencies = [
  "once_cell",
  "regex",
  "regex-cursor",
- "ropey",
+ "ropey 2.0.0-alpha.3",
  "slab",
  "tree-house-bindings",
 ]
@@ -2813,11 +2828,12 @@ dependencies = [
 [[package]]
 name = "tree-house-bindings"
 version = "0.1.1"
+source = "git+https://github.com/cessen/tree-house.git?branch=ropey2#eef376986cb0982aea4f2061d6b738b8f0f86bd0"
 dependencies = [
  "cc",
  "libloading",
  "regex-cursor",
- "ropey",
+ "ropey 2.0.0-alpha.3",
  "thiserror 2.0.12",
 ]
 

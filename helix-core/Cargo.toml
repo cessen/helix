@@ -58,8 +58,7 @@ textwrap = "0.16.2"
 nucleo.workspace = true
 parking_lot.workspace = true
 globset = "0.4.16"
-# regex-cursor = { git="https://github.com/cessen/regex-cursor.git" , branch="ropey2", features=["ropey2"] }
-regex-cursor = { path="/home/cessen/Projects/regex-cursor", default-features = false, features=["ropey2"] }
+regex-cursor = { git="https://github.com/cessen/regex-cursor.git" , branch="ropey2", features=["ropey2"] }
 
 [dev-dependencies]
 quickcheck = { version = "1", default-features = false }

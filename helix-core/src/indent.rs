@@ -9,7 +9,7 @@ use crate::{
     tree_sitter::{
         self,
         query::{InvalidPredicateError, UserPredicate},
-        Capture, Grammar, InactiveQueryCursor, Node, Pattern, Query, QueryMatch, RopeInput,
+        Capture, Grammar, InactiveQueryCursor, Node, Pattern, Query, QueryMatch, Ropey2Input,
     },
     Position, Rope, RopeSlice, Syntax, Tendril,
 };
@@ -634,7 +634,7 @@ fn query_indents<'a>(
     let mut cursor = cursor.execute_query(
         &query.query,
         &syntax.tree().root_node(),
-        RopeInput::new(text),
+        Ropey2Input::new(text),
     );
 
     // Iterate over all captures from the query
